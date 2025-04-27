@@ -1,18 +1,35 @@
 import React, { useEffect } from 'react';
 import { auth, db } from './firebase/config';
+import LoginForm from './components/Auth/Login';
+import RegisterForm from './components/Auth/Register';
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes
+} from "react-router-dom";
+import Auth from './pages/Auth';
+import Home from "./pages/Home";
+
+
 
 function App() {
   useEffect(() => {
-    console.log("🔥 Firebase Auth Instance:", auth);
-    console.log("📦 Firestore DB Instance:", db);
+    console.log("🔥 Firebase Auth Instance");
+    console.log("📦 Firestore DB Instance");
   }, []);
 
   return (
-    <div style={{ textAlign: 'center', marginTop: '50px'}} className='bg-primary text-indigo-200'>
-      <h1 className='bg-accent'>🚀 Firebase + Vite + React</h1>
-      <p>If you're seeing this, your Firebase is set up correctly 🎉</p>
-      <p>Open the console to verify the connection.</p>
-    </div>
+    <>
+    <Router>
+      <Routes>
+      <Route path="/auth" element={<Auth />} >
+      <Route path="/auth/register" element={<RegisterForm />} />
+      <Route path="/auth/login" element={<LoginForm />} />
+      </Route>
+      <Route path="/home" element={<Home />} ></Route>
+      </Routes>
+    </Router>
+    </>
   );
 }
 
