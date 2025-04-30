@@ -6,8 +6,8 @@ import RegisterForm from '../components/Auth/Register'
 const Auth = () => {
   return (
     <>
-    <LoginForm />
-    {/* <RegisterForm /> */}
+    {/* <LoginForm /> */}
+    <RegisterForm />
     </>
   )
 }

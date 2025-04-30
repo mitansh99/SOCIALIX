@@ -9,6 +9,8 @@ import loadingGif from "../../assets/loading.gif";
 import { ColoringData } from "../../StaticData";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "../../firebase/config";
 
 const RegisterForm = () => {
   const userEmail = useRef("");
@@ -16,9 +18,11 @@ const RegisterForm = () => {
   const userPassWord = useRef("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [profilePic, setProfilePic] = useState(null);
+
   const navigate = useNavigate();
 
-  const { setCurrentUser } = useAuth(); 
+  const { setCurrentUser } = useAuth();
 
   const HandelRegisterBtn = async () => {
     try {
@@ -28,7 +32,7 @@ const RegisterForm = () => {
         password: userPassWord.current.value,
       });
       let data;
-      console.log(isValidate)
+      console.log(isValidate);
       if (
         isValidate.emailValid &&
         isValidate.passwordValid &&
@@ -44,11 +48,23 @@ const RegisterForm = () => {
         if (data.user) {
           setError("");
           //  Store extra user info in database
+          let profilePicUrl = "";
+          if (profilePic) {
+            const storageRef = ref(
+              storage,
+              `profilePictures/${data.user.uid}/profile.jpg`
+            );
+            await uploadBytes(storageRef, profilePic);
+            profilePicUrl = await getDownloadURL(storageRef);
+          }
+
           await setDoc(doc(db, "users", data.user.uid), {
             username: userName.current.value,
             email: data.user.email,
+            profilePic: profilePicUrl,
             createdAt: new Date(),
           });
+
           setIsLoading(false);
           clearForm();
           setCurrentUser(data.user);
@@ -131,6 +147,24 @@ const RegisterForm = () => {
         }`}
       >
         <h2 className="text-2xl font-bold text-center mb-6">Create Account</h2>
+
+        <div className="mb-4">
+          <label className="block mb-1 text-gray-600">Profile Picture</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setProfilePic(e.target.files[0])}
+            className="w-full text-sm"
+          />
+          {profilePic && (
+  <img
+    src={URL.createObjectURL(profilePic)}
+    alt="preview"
+    className="mt-2 h-20 w-20 object-cover rounded-full"
+  />
+)}
+
+        </div>
 
         {/* Name Input */}
         <div className="mb-4">
