@@ -1,13 +1,11 @@
 import React from 'react'
-import LoginForm from '../components/Auth/Login'
-import RegisterForm from '../components/Auth/Register'
+import { Outlet } from 'react-router-dom'
 
 
 const Auth = () => {
   return (
     <>
-    {/* <LoginForm /> */}
-    <RegisterForm />
+    <Outlet />
     </>
   )
 }

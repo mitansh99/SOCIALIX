@@ -135,23 +135,6 @@ const Feed = () => {
     }
   ]);
 
-  const handleCreatePost = (content) => {
-    const newPost = {
-      id: Date.now(),
-      username: "Your Name",
-      userHandle: "yourhandle",
-      time: "Just now",
-      profileImage: "/api/placeholder/40/40",
-      content,
-      contentImage: null,
-      likes: { count: 0, isLiked: false },
-      comments: 0,
-      isBookmarked: false
-    };
-    
-    setPosts([newPost, ...posts]);
-  };
-
   return (
     <div className="max-w-xl mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">

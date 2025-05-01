@@ -1,159 +1,153 @@
 import React, { useRef, useState } from "react";
-import { FcGoogle } from "react-icons/fc";
 import { CiMail } from "react-icons/ci";
 import { PiPasswordThin } from "react-icons/pi";
 import { ColoringData } from "../../StaticData";
 import loadingGif from "../../assets/loading.gif";
-import { loginUser, signInWithGoogle } from "../../firebase/authUtils";
+import { loginUser } from "../../firebase/authUtils";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { getDocs, collection, query, where } from "firebase/firestore";
+import bcrypt from "bcryptjs";
+import { db } from "../../firebase/config";
 
 const LoginForm = () => {
   const email = useRef();
   const password = useRef();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { setCurrentUser } = useAuth(); 
-   const navigate = useNavigate();
+  const { setCurrentUser } = useAuth();
+  const navigate = useNavigate();
 
-  const HandelLoginBtn = async () => {
+  const validateData = ({ email }) => {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isEmailValid = emailPattern.test(email);
+    if (!isEmailValid) setError("⚠️ Invalid email format.");
+    return { emailValid: isEmailValid };
+  };
+
+  const handleLogin = async () => {
+    setError("");
+    const emailValue = email.current.value;
+    const passwordValue = password.current.value;
+
+    const isValid = validateData({ email: emailValue });
+
+    if (!isValid.emailValid || passwordValue === "") {
+      setError("Enter valid Email & Password.");
+      return;
+    }
     try {
-      const isValidate = validateData({
-        email: email.current.value,
-      });
-      let data;
-      if (isValidate.emailValid && password.current.value != "") {
-        setIsLoading(true);
-        // calling the Auth Function to Validate user
-        data = await loginUser(
-          email.current.value,
-          password.current.value
-        );
-
-        if (data.user) {
-          setError(""); 
-          setCurrentUser(data.user);
-          navigate("/home"); 
+      setIsLoading(true);
+      const q = query(collection(db, "users"), where("email", "==", emailValue));
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        throw new Error("User not found");
+      }
+      
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+      
+      const isPasswordCorrect = bcrypt.compareSync(passwordValue, userData.password);
+    
+      if (!isPasswordCorrect) {
+        throw new Error("Incorrect password");
+      }
+        if (userData) {
+          setCurrentUser(userData);
+          userData.password = passwordValue;
+          userData.userId = userDoc.id;
+          localStorage.setItem("userData",JSON.stringify(userData));
+          navigate("/home");
         } else {
-          setError(data.error); // show the specific error
+          setError("User data not found in Firestore.");
         }
-        setIsLoading(false);
-      }
-      else{
-        setError("Enter Email & Password.")
-      }
     } catch (err) {
-      console.error("Registration Error:", err);
-      setError("Internal Server Error !");
+      console.error("Login Error:", err);
+      setError(String(err));
+    } finally {
       setIsLoading(false);
     }
   };
 
-const handleGoogleLogin = async () => {
-  const data = await signInWithGoogle();
-
-  if (data.user) {
-    setCurrentUser(data.user); // save globally
-    navigate("/home");
-  } else {
-    setError(data.error);
-  }
-};
-
-  const validateData = (Data) => {
-    const { email } = Data;
-
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const isEmailValid = emailPattern.test(email);
-
-    let message = "";
-    if (!isEmailValid) message += "⚠️ Invalid email format.\n";
-
-    setError(message);
-
-    return {
-      emailValid: isEmailValid,
-    };
-  };
-
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 relative">
-      {isLoading ? (
-        <div className="w-40 h-40 rounded-full absolute flex items-center justify-center">
-          {" "}
-          <img src={loadingGif} alt="loading" />
+    <div
+      className="min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 py-10 relative"
+      style={{ backgroundColor: ColoringData.Theme.light.baseColor }}
+    >
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center z-10 backdrop-blur-[2px]">
+          <img src={loadingGif} alt="loading" className="w-20 sm:w-32" />
         </div>
-      ) : (
-        ""
       )}
+
       <div
-        className={`bg-white p-8 rounded-xl shadow-md w-full max-w-md ${
-          isLoading ? "opacity-25" : ""
+        className={`bg-white p-5 sm:p-8 rounded-xl shadow-md w-full max-w-md ${
+          isLoading ? "opacity-30" : ""
         }`}
       >
-        <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
-
-        {/* Email Input */}
-        <div className="mb-4">
-          <label className="block mb-1 text-gray-600">Email</label>
-          <div className="flex items-center border border-gray-300 rounded-md px-3 py-2">
-            <span className="text-gray-400 mr-2">
-              <CiMail />
-            </span>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="w-full outline-none text-sm placeholder-gray-300"
-              autoComplete="false"
-              spellCheck="false"
-              ref={email}
-            />
-          </div>
+        <div className="mb-5 sm:mb-7">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800">Welcome Back</h1>
+          <p className="text-xs sm:text-sm text-gray-600 mt-1">
+            Login to your account to continue your journey
+          </p>
         </div>
 
-        {/* Password Input */}
-        <div className="mb-4">
-          <label className="block mb-1 text-gray-600">Password</label>
-          <div className="flex items-center border border-gray-300 rounded-md px-3 py-2">
-            <span className="text-gray-400 mr-2">
-              <PiPasswordThin />
-            </span>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              className="w-full outline-none text-sm placeholder-gray-300"
-              ref={password}
-            />
-          </div>
+        <Input label="Email" icon={<CiMail />} type="email" refEl={email} />
+        <Input label="Password" icon={<PiPasswordThin />} type="password" refEl={password} />
+
+        <div className="flex justify-end mb-3 sm:mb-4">
+          <a href="#" className="text-xs sm:text-sm hover:underline transition"
+            style={{ color: ColoringData.Theme.light.secondaryColor }}>
+            Forgot password?
+          </a>
         </div>
 
         {error && (
-          <div className="text-red-600 bg-red-100 p-3 text-sm my-5 rounded-md">
+          <div className="text-red-600 bg-red-100 p-2 sm:p-3 text-xs sm:text-sm my-3 sm:my-5 rounded-md">
             {error.split("\n").map((line, index) => (
               <p key={index}>{line}</p>
             ))}
           </div>
         )}
 
-        {/* Login Button */}
         <button
           style={{ backgroundColor: ColoringData.Theme.light.primarColor }}
-          className="cursor-pointer w-full  text-white py-2 rounded-md font-semibold hover:shadow-md transition mb-2"
-          onClick={HandelLoginBtn}
+          className="w-full text-white py-2 sm:py-3 rounded-lg font-semibold hover:bg-indigo-700 transition text-xs sm:text-sm md:text-base"
+          onClick={handleLogin}
         >
           Login
         </button>
 
-        <div className="text-center text-gray-400 mb-2">or</div>
-
-        {/* Google Login Button */}
-        <button className="cursor-pointer w-full border border-gray-300 py-2 rounded-md flex items-center justify-center gap-3 hover:shadow-md transition" onClick={handleGoogleLogin}>
-          <FcGoogle />
-          <span className="text-gray-700 font-medium">Login with Google</span>
-        </button>
+        <div className="mt-4 sm:mt-6 text-center">
+          <p className="text-xs sm:text-sm text-gray-600">
+            Don't have an account?{" "}
+            <Link
+              to="/auth/register"
+              className="font-medium hover:underline"
+              style={{ color: ColoringData.Theme.light.secondaryColor }}
+            >
+              Sign up
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
 };
+
+const Input = ({ label, icon, type = "text", refEl }) => (
+  <div className="mb-3 sm:mb-4">
+    <label className="block mb-1 text-xs sm:text-sm text-gray-600">{label}</label>
+    <div className="flex items-center border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus-within:shadow-md">
+      <span className="text-gray-400 mr-2 sm:mr-3">{icon}</span>
+      <input
+        type={type}
+        placeholder={`Enter your ${label.toLowerCase()}`}
+        className="w-full outline-none text-xs sm:text-sm placeholder-gray-400 bg-transparent"
+        ref={refEl}
+      />
+    </div>
+  </div>
+);
 
 export default LoginForm;

@@ -1,251 +1,183 @@
 import React, { useRef, useState } from "react";
-import { FcGoogle } from "react-icons/fc";
-import { CiUser, CiMail } from "react-icons/ci";
+import { CiUser, CiMail, CiPhone } from "react-icons/ci";
 import { PiPasswordThin } from "react-icons/pi";
-import { registerUser, signInWithGoogle } from "../../firebase/authUtils";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, collection, addDoc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase/config";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import loadingGif from "../../assets/loading.gif";
 import { ColoringData } from "../../StaticData";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "../../firebase/config";
+import bcrypt from "bcryptjs";
 
 const RegisterForm = () => {
-  const userEmail = useRef("");
-  const userName = useRef("");
-  const userPassWord = useRef("");
+  const refs = {
+    userEmail: useRef(""),
+    userName: useRef(""),
+    userPassWord: useRef(""),
+    fullName: useRef(""),
+    phoneNumber: useRef(""),
+    bio: useRef("")
+  };
+
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [profilePic, setProfilePic] = useState(null);
-
   const navigate = useNavigate();
 
-  const { setCurrentUser } = useAuth();
+  const validateData = ({ email, password, phone, username }) => {
+    const patterns = {
+      email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+      phone: /^\d{10}$/,
+      username: /^\S+$/
+    };
 
-  const HandelRegisterBtn = async () => {
+    const errors = [];
+
+    if (!patterns.email.test(email)) errors.push("Invalid email format.");
+    if (!patterns.password.test(password))
+      errors.push("Password must be at least 8 characters long with upper, lower, number, and special character.");
+    if (!patterns.phone.test(phone)) errors.push("Phone number must be 10 digits.");
+    if (!patterns.username.test(username)) errors.push("Username must not contain spaces.");
+
+    return errors;
+  };
+
+  const clearForm = () => {
+    Object.values(refs).forEach((ref) => (ref.current.value = ""));
+  };
+
+  const handleRegister = async () => {
+    const values = {
+      email: refs.userEmail.current.value,
+      password: refs.userPassWord.current.value,
+      phone: refs.phoneNumber.current.value,
+      username: refs.userName.current.value
+    };
+
+    const validationErrors = validateData(values);
+    if (validationErrors.length) {
+      setError(validationErrors.join("\n"));
+      return;
+    }
+
     try {
-      const isValidate = validateData({
-        email: userEmail.current.value,
-        name: userName.current.value,
-        password: userPassWord.current.value,
-      });
-      let data;
-      console.log(isValidate);
-      if (
-        isValidate.emailValid &&
-        isValidate.passwordValid &&
-        userName.current.value != ""
-      ) {
-        setIsLoading(true);
-        // calling the Auth Function to create new user
-        data = await registerUser(
-          userEmail.current.value,
-          userPassWord.current.value
-        );
+      setIsLoading(true);
+      setError("");
+      const salt = bcrypt.genSaltSync(10);
+      const hashedPassword = bcrypt.hashSync(values.password, salt);
+      const userObj = {
+        username: values.username,
+        fullName: refs.fullName.current.value,
+        email: values.email,
+        phone: values.phone,
+        bio: refs.bio.current.value,
+        password: hashedPassword,
+        createdAt: new Date()
+      };
 
-        if (data.user) {
-          setError("");
-          //  Store extra user info in database
-          let profilePicUrl = "";
-          if (profilePic) {
-            const storageRef = ref(
-              storage,
-              `profilePictures/${data.user.uid}/profile.jpg`
-            );
-            await uploadBytes(storageRef, profilePic);
-            profilePicUrl = await getDownloadURL(storageRef);
-          }
+      const docRef = await addDoc(collection(db, "users"), userObj);
+      const docSnap = await getDoc(doc(db, "users", docRef.id));
 
-          await setDoc(doc(db, "users", data.user.uid), {
-            username: userName.current.value,
-            email: data.user.email,
-            profilePic: profilePicUrl,
-            createdAt: new Date(),
-          });
-
-          setIsLoading(false);
-          clearForm();
-          setCurrentUser(data.user);
-          navigate("/home");
-        } else {
-          setError(data.error);
-          setIsLoading(false);
-        }
+      if (docSnap.exists()) {
+        clearForm();
+        navigate("/login");
       } else {
-        console.log("all fields require");
-        setIsLoading(false);
+        throw new Error("User document not found");
       }
     } catch (err) {
-      console.error("Registration Error:", err);
-      setError("Internal Server Error !");
+      console.error("Registration failed:", err);
+      setError("Something went wrong during registration.");
+    } finally {
       setIsLoading(false);
     }
   };
 
-  //Register with google
-  const HandelGoogleBtn = async () => {
-    try {
-      //calling the Auth Function to create new user
-      let data = await signInWithGoogle();
-      if (data) {
-        clearForm();
-      }
-    } catch {}
-  };
-
-  const validateData = (Data) => {
-    const { email, password } = Data;
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    // Password validation rules:
-    // - At least 8 characters
-    // - At least one uppercase letter
-    // - At least one lowercase letter
-    // - At least one number
-    // - At least one special character
-    const passwordPattern =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-
-    const isEmailValid = emailPattern.test(email);
-    const isPasswordValid = passwordPattern.test(password);
-    let message = "";
-    if (!isEmailValid) message += "⚠️ Invalid email format.\n";
-    if (!isPasswordValid)
-      message +=
-        "⚠️ Password must be at least 8 characters, with uppercase, lowercase, number, and special character.\n";
-
-    setError(message);
-
-    return {
-      emailValid: isEmailValid,
-      passwordValid: isPasswordValid,
-    };
-  };
-
-  const clearForm = () => {
-    // clearing the Form Data
-    userEmail.current.value = "";
-    userName.current.value = "";
-    userPassWord.current.value = "";
-  };
+  const Input = ({ label, icon, type = "text", refEl }) => (
+    <div className="mb-2 sm:mb-3">
+      <label className="block mb-1 text-xs sm:text-sm text-gray-600">{label}</label>
+      <div className="flex items-center border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus-within:shadow-md">
+        <span className="text-gray-400 mr-2 sm:mr-3">{icon}</span>
+        <input
+          type={type}
+          placeholder={`Enter ${label.toLowerCase()}`}
+          className="w-full outline-none text-xs sm:text-sm placeholder-gray-400 bg-transparent"
+          ref={refEl}
+        />
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 relative ">
-      {isLoading ? (
-        <div className="w-40 h-40 rounded-full absolute flex items-center justify-center">
-          {" "}
-          <img src={loadingGif} alt="loading" />
+    <div
+      className="min-h-screen flex items-center justify-center px-4 py-10 relative"
+      style={{ backgroundColor: ColoringData.Theme.light.baseColor }}
+    >
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center z-10 backdrop-blur-[2px]">
+          <img src={loadingGif} alt="loading" className="w-20 sm:w-32" />
         </div>
-      ) : (
-        ""
       )}
+
       <div
-        className={`bg-white p-8 rounded-xl shadow-md w-full max-w-md ${
-          isLoading ? "opacity-25" : ""
+        className={`bg-white p-5 sm:p-8 rounded-xl shadow-md w-full max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 ${
+          isLoading ? "opacity-30" : ""
         }`}
       >
-        <h2 className="text-2xl font-bold text-center mb-6">Create Account</h2>
-
-        <div className="mb-4">
-          <label className="block mb-1 text-gray-600">Profile Picture</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setProfilePic(e.target.files[0])}
-            className="w-full text-sm"
-          />
-          {profilePic && (
-  <img
-    src={URL.createObjectURL(profilePic)}
-    alt="preview"
-    className="mt-2 h-20 w-20 object-cover rounded-full"
-  />
-)}
-
+        <div className="col-span-2 mb-5">
+          <h1 className="text-3xl font-bold text-slate-800">Create Your Account</h1>
+          <p className="text-sm text-gray-400 mt-1">
+            Join the community — connect, share, and explore with people around the world.
+          </p>
         </div>
 
-        {/* Name Input */}
-        <div className="mb-4">
-          <label className="block mb-1 text-gray-600">Full Name</label>
-          <div className="flex items-center border border-gray-300 rounded-md px-3 py-2">
-            <span className="text-gray-400 mr-2">
-              <CiUser />
-            </span>
-            <input
-              type="text"
-              placeholder="Your name"
-              className="w-full outline-none text-sm placeholder-gray-300"
-              spellCheck="false"
-              autoComplete="false"
-              ref={userName}
-            />
-          </div>
+        <div className="space-y-3">
+          <Input label="Username" icon={<CiUser />} refEl={refs.userName} />
+          <Input label="Email" icon={<CiMail />} type="email" refEl={refs.userEmail} />
+          <Input label="Password" icon={<PiPasswordThin />} type="password" refEl={refs.userPassWord} />
         </div>
 
-        {/* Email Input */}
-        <div className="mb-4">
-          <label className="block mb-1 text-gray-600">Email</label>
-          <div className="flex items-center border border-gray-300 rounded-md px-3 py-2">
-            <span className="text-gray-400 mr-2">
-              <CiMail />
-            </span>
-            <input
-              type="email"
-              placeholder="Your email"
-              className="w-full outline-none text-sm placeholder-gray-300"
-              spellCheck="false"
-              autoComplete="false"
-              ref={userEmail}
-            />
-          </div>
-        </div>
-
-        {/* Password Input */}
-        <div className="mb-4">
-          <label className="block mb-1 text-gray-600">Password</label>
-          <div className="flex items-center border border-gray-300 rounded-md px-3 py-2">
-            <span className="text-gray-400 mr-2">
-              <PiPasswordThin />
-            </span>
-            <input
-              type="password"
-              placeholder="Create a password"
-              className="w-full outline-none text-sm placeholder-gray-300"
-              ref={userPassWord}
+        <div className="space-y-3">
+          <Input label="Full Name" icon={<CiUser />} refEl={refs.fullName} />
+          <Input label="Phone Number" icon={<CiPhone />} type="tel" refEl={refs.phoneNumber} />
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Short Bio</label>
+            <textarea
+              ref={refs.bio}
+              placeholder="Short bio"
+              className="w-full text-sm p-3 border border-gray-300 rounded-md resize-none outline-none placeholder-gray-400 focus:shadow-md"
+              rows={3}
             />
           </div>
         </div>
 
         {error && (
-          <div className="text-red-600 bg-red-100 p-3 text-sm my-5 rounded-md">
-            {error.split("\n").map((line, index) => (
-              <p key={index}>{line}</p>
-            ))}
+          <div className="col-span-2 text-red-600 bg-red-100 p-3 text-sm rounded-md whitespace-pre-line">
+            {error}
           </div>
         )}
 
-        {/* Register Button */}
+        <div className="col-span-2 mt-3">
+          <button
+            style={{ backgroundColor: ColoringData.Theme.light.primarColor }}
+            className="w-full text-white py-3 rounded-lg font-medium hover:shadow-md text-sm"
+            onClick={handleRegister}
+          >
+            Create Account
+          </button>
+        </div>
 
-        <button
-          style={{ backgroundColor: ColoringData.Theme.light.primarColor }}
-          className={`cursor-pointer w-full text-white py-2 rounded-md font-medium hover:shadow-md transition mb-2`}
-          onClick={HandelRegisterBtn}
-        >
-          Register
-        </button>
-
-        <div className="text-center text-gray-400 mb-2">or</div>
-
-        {/* Google Sign Up Button */}
-        <button
-          className="cursor-pointer w-full border border-gray-300 py-2 rounded-md flex items-center justify-center gap-3 hover:shadow-md transition "
-          onClick={HandelGoogleBtn}
-        >
-          <FcGoogle />
-          <span className="text-gray-700 font-medium">Sign up with Google</span>
-        </button>
+        <div className="col-span-2 mt-2 flex justify-center">
+          <p className="text-sm text-gray-600">
+            Already have an account?{" "}
+            <Link
+              to="/auth/login"
+              className="font-medium hover:underline"
+              style={{ color: ColoringData.Theme.light.secondaryColor }}
+            >
+              Login
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
