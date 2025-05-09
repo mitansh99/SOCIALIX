@@ -17,7 +17,10 @@ import '../App.css'
 const Home = () => {
   const [loading, setLoading] = useState(true); 
   const {currentUser ,setCurrentUser} = useAuth();
+  const [activeCompo , setActiveCompo] = useState("Feed");
   const navigate = useNavigate();
+
+
   useEffect(() => {
     (async () => {
       if (!currentUser) {
@@ -61,7 +64,9 @@ const Home = () => {
     })();
   }, []);
   
-  
+  const handleNavigation = (compo) => {
+    setActiveCompo(compo);
+  }
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -77,13 +82,13 @@ const Home = () => {
       >
         {/* Left sidebar - hidden on mobile, fixed on large screens */}
         <div className="hidden md:block md:w-64 lg:w-72 flex-shrink-0 sticky top-0 h-screen overflow-y-auto pt-4 scrollbar-hide">
-          <SidebarLeft />
+          <SidebarLeft onNavigate={handleNavigation} activeComponent={activeCompo}/>
         </div>
 
         {/* Main content - centered */}
         <main className="flex-grow max-w-xl w-full mx-auto py-4">
-          <Feed />
-          {/* <Friends /> */}
+          {activeCompo === "Feed" ? <Feed/> : <Friends />}
+          
         </main>
 
         {/* Right sidebar - only visible on large screens */}

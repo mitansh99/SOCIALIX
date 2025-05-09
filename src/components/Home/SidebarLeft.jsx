@@ -1,14 +1,15 @@
 import { FiUsers } from "react-icons/fi";
 import { BiCategoryAlt } from "react-icons/bi";
-
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { collection, query, where, onSnapshot, doc } from "firebase/firestore";
 import { db } from "../../firebase/config"; // Firestore config import
 import USER from "../../assets/USER.png"; // Profile placeholder image
 import { ColoringData } from "../../StaticData"; // Custom color theme
+import "../../App.css";
 
-const SidebarLeft = () => {
+
+const SidebarLeft = ({ onNavigate ,activeComponent}) => {
   const { currentUser } = useAuth();
   const [postCount, setPostCount] = useState(0);
   const [followersCount, setFollowersCount] = useState(0);
@@ -78,20 +79,22 @@ const SidebarLeft = () => {
 
       <div className="space-y-1">
         <button
-          className="flex items-center space-x-3 w-full p-3 rounded-lg"
-          style={{
-            backgroundColor: `${ColoringData.Theme.light.primarColor}`,
-            color: "white",
-          }}
+          onClick={() => onNavigate("Feed")}
+          className={`flex items-center space-x-3 w-full p-3 rounded-lg cursor-pointer
+            ${activeComponent ==="Feed"? "bg-[#0a0147] text-white": "hover:bg-gray-200 hover:text-dark"}`}
         >
-          <div className="text-gray-50">
+          <div>
             <BiCategoryAlt className="h-5 w-5" />
           </div>
           <span className="text-sm">Feed</span>
         </button>
 
-        <button className="flex items-center space-x-3 w-full p-3 rounded-lg hover:bg-gray-100">
-          <div className="text-gray-600">
+ <button
+          onClick={() => onNavigate("Friends")}
+          className={`flex items-center space-x-3 w-full p-3 rounded-lg cursor-pointer
+            ${activeComponent ==="Friends"? "bg-[#0a0147] text-white": "hover:bg-gray-200 hover:text-dark"}`}
+        >
+          <div>
             <FiUsers className="h-5 w-5" />
           </div>
           <span className="text-sm">Friends</span>

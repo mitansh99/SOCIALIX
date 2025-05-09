@@ -28,7 +28,7 @@ const CreatePost = () => {
       userId: currentUser?.userId || "unknown",
       username: currentUser.username || "Anonymous",
       createdAt: new Date(),
-      likeCount: 0,
+      likeCount: [],
     };
     try {
       await addDoc(collection(db, "posts"), postData);

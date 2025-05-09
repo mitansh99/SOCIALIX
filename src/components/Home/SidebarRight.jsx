@@ -122,7 +122,7 @@ const SidebarRight = () => {
                       <div className="text-gray-500 text-xs">@{user.username}</div>
                     </div>
                   </div>
-
+ 
                   <button
                     onClick={() => toggleFollow(user.id)}
                     disabled={isLoading}
