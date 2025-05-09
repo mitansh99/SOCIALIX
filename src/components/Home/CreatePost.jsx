@@ -76,7 +76,7 @@ const CreatePost = () => {
                 disabled={!postText.trim()}
                 className={`px-4 py-2 rounded-lg font-medium text-sm ${
                   postText.trim()
-                    ? `bg-blue-500 text-white hover:bg-blue-600`
+                    ? `bg-[#0a0147] text-white hover:bg-[#0a0147]`  // Custom HEX color
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 } transition-colors`}
               >

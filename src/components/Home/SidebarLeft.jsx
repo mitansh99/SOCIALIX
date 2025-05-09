@@ -1,29 +1,42 @@
-import { FaUsers } from "react-icons/fa";
+import { FiUsers } from "react-icons/fi";
+import { BiCategoryAlt } from "react-icons/bi";
+
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { db } from "../../firebase/config"; // Make sure your firebase config is imported here
-import USER from "../../assets/USER.png";
-import { ColoringData } from "../../StaticData";
+import { collection, query, where, onSnapshot, doc } from "firebase/firestore";
+import { db } from "../../firebase/config"; // Firestore config import
+import USER from "../../assets/USER.png"; // Profile placeholder image
+import { ColoringData } from "../../StaticData"; // Custom color theme
 
 const SidebarLeft = () => {
   const { currentUser } = useAuth();
   const [postCount, setPostCount] = useState(0);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
 
-  // Real-time listener for post count
+  // Real-time listener for post count, followers, and following
   useEffect(() => {
     if (currentUser?.userId) {
-      // Firestore reference
+      // Posts reference and listener
       const postsRef = collection(db, "posts");
       const q = query(postsRef, where("userId", "==", currentUser.userId));
-
-      // Listen for changes in real-time
-      const unsubscribe = onSnapshot(q, (snapshot) => {
+      const unsubscribePosts = onSnapshot(q, (snapshot) => {
         setPostCount(snapshot.size);
       });
 
-      // Cleanup listener on unmount
-      return () => unsubscribe();
+      // Followers and Following reference and listeners
+      const userRef = doc(db, "users", currentUser.userId);
+      const unsubscribeUser = onSnapshot(userRef, (doc) => {
+        const data = doc.data();
+        setFollowersCount(data?.followers?.length || 0);
+        setFollowingCount(data?.following?.length || 0);
+      });
+
+      // Cleanup listeners on unmount
+      return () => {
+        unsubscribePosts();
+        unsubscribeUser();
+      };
     }
   }, [currentUser]);
 
@@ -49,20 +62,15 @@ const SidebarLeft = () => {
 
         <div className="flex justify-between w-full mt-4">
           <div className="flex flex-col items-center">
-            <span className="font-bold">
-              {currentUser?.following.length || "0"}
-            </span>
+            <span className="font-bold">{followingCount}</span>
             <span className="text-xs text-gray-500">Following</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="font-bold">
-              {currentUser?.followers.length || "0"}
-            </span>
+            <span className="font-bold">{followersCount}</span>
             <span className="text-xs text-gray-500">Followers</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="font-bold">{postCount}</span>{" "}
-            {/* Real-time count here */}
+            <span className="font-bold">{postCount}</span>
             <span className="text-xs text-gray-500">Posts</span>
           </div>
         </div>
@@ -77,14 +85,14 @@ const SidebarLeft = () => {
           }}
         >
           <div className="text-gray-50">
-            <FaUsers className="h-5 w-5" />
+            <BiCategoryAlt className="h-5 w-5" />
           </div>
           <span className="text-sm">Feed</span>
         </button>
 
         <button className="flex items-center space-x-3 w-full p-3 rounded-lg hover:bg-gray-100">
           <div className="text-gray-600">
-            <FaUsers className="h-5 w-5" />
+            <FiUsers className="h-5 w-5" />
           </div>
           <span className="text-sm">Friends</span>
         </button>
