@@ -11,6 +11,7 @@ import { getDocs, collection, query, where } from "firebase/firestore";
 import { db } from "../firebase/config";
 import Friends from "../components/Home/Friends";
 import { useNavigate }  from "react-router-dom";
+import '../App.css'
 
 
 const Home = () => {
@@ -75,7 +76,7 @@ const Home = () => {
         style={{ backgroundColor: `${ColoringData.Theme.light.baseColor}` }}
       >
         {/* Left sidebar - hidden on mobile, fixed on large screens */}
-        <div className="hidden md:block md:w-64 lg:w-72 flex-shrink-0 sticky top-0 h-screen overflow-y-auto pt-4">
+        <div className="hidden md:block md:w-64 lg:w-72 flex-shrink-0 sticky top-0 h-screen overflow-y-auto pt-4 scrollbar-hide">
           <SidebarLeft />
         </div>
 
@@ -86,7 +87,7 @@ const Home = () => {
         </main>
 
         {/* Right sidebar - only visible on large screens */}
-        <div className="hidden lg:block lg:w-72 flex-shrink-0 sticky top-0 h-screen overflow-y-auto pt-4">
+        <div className="hidden lg:block lg:w-72 flex-shrink-0 sticky top-0 h-screen overflow-y-auto pt-4 scrollbar-hide">
           <SidebarRight />
         </div>
       </div>

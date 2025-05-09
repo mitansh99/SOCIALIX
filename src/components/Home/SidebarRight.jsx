@@ -1,4 +1,6 @@
 // /src/components/SidebarRight.jsx
+import '../../App.css';
+
 const SidebarRight = () => {
     const suggestedUsers = [
       { name: 'Scarlett Floyd', username: 'floydscrt' },
@@ -24,8 +26,8 @@ const SidebarRight = () => {
     ];
   
     return (
-      <div className="pl-4">
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+      <div className="pl-2">
+        <div className="bg-white rounded-xl shadow-sm p-4 mb-6 ">
           <h3 className="font-bold text-base mb-4">Who to follow</h3>
           
           <div className="space-y-4">

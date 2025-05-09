@@ -72,6 +72,8 @@ const RegisterForm = () => {
         phone: values.phone,
         bio: refs.bio.current.value,
         password: hashedPassword,
+        followers: [],
+        following: [],
         createdAt: new Date()
       };
 
@@ -80,7 +82,7 @@ const RegisterForm = () => {
 
       if (docSnap.exists()) {
         clearForm();
-        navigate("/login");
+        navigate("/auth/login");
       } else {
         throw new Error("User document not found");
       }
