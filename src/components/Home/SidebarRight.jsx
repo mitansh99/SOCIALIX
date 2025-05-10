@@ -10,7 +10,8 @@ import {
   arrayUnion,
   arrayRemove
 } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+import { ref, onValue } from "firebase/database";
+import { db, realtimeDb } from '../../firebase/config';
 import { useAuth } from '../../context/AuthContext';
 
 const SidebarRight = () => {
@@ -18,7 +19,8 @@ const SidebarRight = () => {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [visibleUsers, setVisibleUsers] = useState(5);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [actionLoading, setActionLoading] = useState(null); // Holds the ID of the user being followed/unfollowed
+  const [actionLoading, setActionLoading] = useState(null);
+  const [onlineStatus, setOnlineStatus] = useState({});
 
   const { currentUser } = useAuth();
 
@@ -28,9 +30,22 @@ const SidebarRight = () => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const usersList = snapshot.docs
         .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .filter((user) => user.id !== currentUser.userId); // Exclude the current user
+        .filter((user) => user.id !== currentUser.userId);
       setSuggestedUsers(usersList);
       setLoadingUsers(false);
+
+      // 🟢 Fetch online status for each user
+      usersList.forEach((user) => {
+        const userStatusRef = ref(realtimeDb, `/onlineUsers/${user.id}`);
+        onValue(userStatusRef, (snapshot) => {
+          if (snapshot.exists()) {
+            setOnlineStatus((prev) => ({
+              ...prev,
+              [user.id]: snapshot.val().isOnline,
+            }));
+          }
+        });
+      });
     });
 
     return () => unsubscribe();
@@ -41,35 +56,28 @@ const SidebarRight = () => {
     if (!currentUser?.userId) return;
 
     setActionLoading(userId);
-    
-    const userDocRef = doc(db, 'users', currentUser.userId);  // Reference to *current user's* doc
-    const targetUserDocRef = doc(db, 'users', userId);        // Reference to *target user's* doc
-    
+
+    const userDocRef = doc(db, 'users', currentUser.userId); 
+    const targetUserDocRef = doc(db, 'users', userId);
+
     const isFollowing = currentUser.following?.includes(userId);
 
     try {
       if (isFollowing) {
-        // 🔽 **Unfollow Logic**
         await updateDoc(userDocRef, {
           following: arrayRemove(userId),
         });
         await updateDoc(targetUserDocRef, {
           followers: arrayRemove(currentUser.userId),
         });
-
-        // Real-time local update (if your AuthContext doesn't auto-refresh):
         currentUser.following = currentUser.following.filter((id) => id !== userId);
-
       } else {
-        // 🔼 **Follow Logic**
         await updateDoc(userDocRef, {
           following: arrayUnion(userId),
         });
         await updateDoc(targetUserDocRef, {
           followers: arrayUnion(currentUser.userId),
         });
-
-        // Real-time local update (if your AuthContext doesn't auto-refresh):
         currentUser.following.push(userId);
       }
     } catch (err) {
@@ -106,23 +114,26 @@ const SidebarRight = () => {
             {suggestedUsers.slice(0, visibleUsers).map((user) => {
               const isFollowing = currentUser.following?.includes(user.id);
               const isLoading = actionLoading === user.id;
+              const isOnline = onlineStatus[user.id] ?? false;
 
+               const profileInitial = user.username.charAt(0).toUpperCase();
               return (
                 <div key={user.id} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="h-8 w-8 rounded-full bg-gray-300 overflow-hidden">
-                      <img
-                        src={user.profilePicture || '/api/placeholder/32/32'}
-                        alt={user.fullName}
-                        className="h-full w-full object-cover"
-                      />
+                    <div className="relative">
+                      <div className="h-10 w-10 rounded-full bg-gray-300 text-gray-600 flex justify-center items-center  font-semibold text-lg">
+              {profileInitial}
+            </div>
+                      {isOnline && (
+                        <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white" />
+                      )}
                     </div>
                     <div>
                       <div className="font-medium text-sm">{user.fullName}</div>
                       <div className="text-gray-500 text-xs">@{user.username}</div>
                     </div>
                   </div>
- 
+
                   <button
                     onClick={() => toggleFollow(user.id)}
                     disabled={isLoading}
@@ -158,6 +169,7 @@ const SidebarRight = () => {
         )}
       </div>
 
+      {/* 📰 News Section (Retained as Requested) */}
       <div>
         <h3 className="font-bold text-base mb-4">Today's news</h3>
         <div className="space-y-4">

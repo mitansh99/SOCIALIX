@@ -14,6 +14,10 @@ import {
   doc,
   updateDoc,
   onSnapshot,
+  orderBy,
+  startAfter,
+  limit,
+  getDocs,
 } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import { useAuth } from "../../context/AuthContext";
@@ -22,40 +26,37 @@ import "../../App.css";
 const Feed = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lastDoc, setLastDoc] = useState(null);
+  const [isFetching, setIsFetching] = useState(false);
   const { currentUser } = useAuth();
 
   useEffect(() => {
     setLoading(true);
+    const q = query(
+      collection(db, "posts"),
+      orderBy("createdAt", "desc"),
+      limit(10)
+    );
 
-    const fetchPosts = () => {
-      const q = query(collection(db, "posts"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const postData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
-      // Real-time listener
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const postData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+      const sortedPosts = postData.sort((a, b) => b.createdAt - a.createdAt);
+      setPosts(sortedPosts);
+      setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+      setLoading(false);
+    });
 
-        // Sorting by timestamp (most recent first)
-        const sortedPosts = postData.sort((a, b) => b.timestamp - a.timestamp);
-        setPosts(sortedPosts);
-        setLoading(false);
-      });
-
-      // Cleanup listener on unmount
-      return () => unsubscribe();
-    };
-
-    fetchPosts();
+    return () => unsubscribe();
   }, [currentUser]);
 
-  // 🔄 **Handle Like Logic**
   const handleLikeToggle = async (postId, isLiked) => {
     try {
       const postRef = doc(db, "posts", postId);
 
-      // Optimistic UI update
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === postId
@@ -69,64 +70,58 @@ const Feed = () => {
         )
       );
 
-      // Update Firestore
       await updateDoc(postRef, {
         likeCount: isLiked
-          ? posts.find((post) => post.id === postId).likeCount.filter(
-              (id) => id !== currentUser.userId
-            )
-          : [...posts.find((post) => post.id === postId).likeCount, currentUser.userId],
+          ? posts
+              .find((post) => post.id === postId)
+              .likeCount.filter((id) => id !== currentUser.userId)
+          : [
+              ...posts.find((post) => post.id === postId).likeCount,
+              currentUser.userId,
+            ],
       });
     } catch (error) {
       console.error("Failed to update like status:", error);
     }
   };
 
-  // 📝 **Social Media Card Component**
   const SocialMediaPostCard = ({
     id,
+    fullName,
     username,
     createdAt,
     text,
     likeCount = [],
   }) => {
     const isLiked = likeCount.includes(currentUser.userId);
-
-    // 🕒 Format Time
-    const formattedTime = new Date(createdAt).toLocaleString("en-IN", {
+    const formattedTime = createdAt?.toDate().toLocaleString("en-IN", {
       timeZone: "Asia/Kolkata",
-      weekday: "short",
-      year: "numeric",
-      month: "short",
-      day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit",
+      hour12: true,
+      day: "2-digit",
+      month: "short",
     });
 
+    // Get the first character of the username for the profile pic
+    const profileInitial = username.charAt(0).toUpperCase();
+
     return (
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6 shadow-sm hover:shadow-lg transition-shadow duration-200">
         <div className="p-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-full bg-gray-200 overflow-hidden">
-              <img
-                src={"/api/placeholder/40/40"}
-                alt={username}
-                className="h-full w-full object-cover"
-              />
+            {/* Profile Initial Circle */}
+            <div className="h-10 w-10 rounded-full bg-gray-300 text-gray-600 flex justify-center items-center  font-semibold text-lg">
+              {profileInitial}
             </div>
             <div>
-              <h3 className="font-semibold text-sm">{username}</h3>
+              <h3 className="font-semibold text-lg">{fullName}</h3>
               <div className="flex items-center text-xs text-gray-500">
-                <span className="mx-1">•</span>
+                <span className="mr-1">@{username} •</span>
                 <span>{formattedTime}</span>
               </div>
             </div>
           </div>
-          For Feature
-          {/* <button className="text-gray-500 hover:text-gray-700">
-            <FaEllipsisH className="h-5 w-5" />
-          </button> */}
         </div>
 
         <div className="px-4 pb-3">
@@ -143,40 +138,106 @@ const Feed = () => {
                 }`}
               >
                 <FaHeart className="h-5 w-5" />
-                <span className="text-xs font-medium">
-                  {likeCount.length}
-                </span>
+                <span className="text-xs font-medium">{likeCount.length}</span>
               </button>
+              {/* <button className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 cursor-pointer">
+                <FaComment className="h-5 w-5" />
+                <span className="text-xs">Comment</span>
+              </button> */}
+              {/* <button className="flex items-center space-x-1 text-gray-500 hover:text-green-500 cursor-pointer">
+                <FaShareAlt className="h-5 w-5" />
+                <span className="text-xs">Share</span>
+              </button> */}
+              {/* <button className="flex items-center space-x-1 text-gray-500 hover:text-gray-700 cursor-pointer">
+                <FaBookmark className="h-5 w-5" />
+              </button> */}
             </div>
+            {/* <button className="text-gray-500 hover:text-gray-700 cursor-pointer">
+              <FaEllipsisH className="h-5 w-5" />
+            </button> */}
           </div>
         </div>
       </div>
     );
   };
 
+  const handleScroll = () => {
+    if (loading) return;
+    const scrollPosition =
+      window.innerHeight + document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight;
+    if (scrollPosition >= scrollHeight - 10) {
+      fetchMorePosts();
+    }
+  };
+
+  const fetchMorePosts = async () => {
+    if (isFetching) return; // Prevent multiple fetches at once
+
+    setIsFetching(true);
+    if (!lastDoc) return;
+
+    setLoading(true);
+
+    try {
+      const q = query(
+        collection(db, "posts"),
+        orderBy("createdAt", "desc"),
+        startAfter(lastDoc),
+        limit(10)
+      );
+
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        const newPosts = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setPosts((prev) => [...prev, ...newPosts]);
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+      } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Error loading more posts:", error);
+      setLoading(false);
+      setIsFetching(false); 
+    } finally {
+      setLoading(false);
+      setIsFetching(false); 
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loading]);
+
   return (
-    <div className="max-w-xl mx-auto px-4 py-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="max-w-xl mx-auto px-4 py-3  sm:mb-0 mb-12">
+      <div className="flex justify-between items-center mb-5">
         <h1 className="text-xl font-bold">Create Post</h1>
       </div>
 
       <CreatePost />
-      <h1 className="text-xl font-bold mb-5 ">Feed</h1>
+      <h1 className="text-xl font-bold mb-5">Feed</h1>
 
-      {loading ? (
+      {loading && posts.length === 0 ? (
         <div className="text-center">Loading...</div>
       ) : (
         <div className="space-y-6">
           {posts.length > 0 ? (
-            posts.map((post) => (
-              <SocialMediaPostCard key={post.id} {...post} />
-            ))
+            posts.map((post) => <SocialMediaPostCard key={post.id} {...post} />)
           ) : (
-            <div className="text-center text-gray-400">
-              No posts to display
-            </div>
+            <div className="text-center text-gray-400">No posts to display</div>
           )}
         </div>
+      )}
+
+      {loading && posts.length > 0 && (
+        <div className="text-center">Loading more...</div>
       )}
     </div>
   );

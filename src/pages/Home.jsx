@@ -98,7 +98,7 @@ const Home = () => {
       </div>
 
       {/* Mobile navigation - only visible on small screens */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around p-3 md:hidden z-10">
+      <div className="fixed bottom-0  left-0 right-0 bg-white border-t border-gray-200 flex justify-around p-3 md:hidden z-10">
         <button className="flex flex-col items-center justify-center">
           <svg
             xmlns="http://www.w3.org/2000/svg"

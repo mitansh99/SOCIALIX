@@ -45,16 +45,13 @@ const SidebarLeft = ({ onNavigate ,activeComponent}) => {
     <div className="pr-4">
       <div className="flex flex-col items-center mb-6">
         <div
-          className="h-20 w-20 rounded-full p-1 mb-2"
+          className="h-20 w-20 rounded-full bg-[#0a0147] flex justify-center items-center text-white font-semibold text-3xl mb-5"
           style={{
-            border: `3px solid ${ColoringData.Theme.light.primarColor}`,
+            border: `4px solid ${ColoringData.Theme.light.secondaryColor}`,
           }}
         >
-          <img
-            src={USER}
-            alt="Profile"
-            className="rounded-full h-full w-full object-cover"
-          />
+                   {currentUser?.fullName ? currentUser.fullName.charAt(0).toUpperCase() : "U"}
+
         </div>
         <h2 className="font-bold text-lg">{currentUser?.fullName || "Name"}</h2>
         <p className="text-gray-500 text-sm">

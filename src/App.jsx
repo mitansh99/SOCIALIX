@@ -6,10 +6,13 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Auth from "./pages/Auth";
 import Home from "./pages/Home";
 import { ColoringData } from "./StaticData";
+import UserStatusUpdater from "./components/others/UserStatusUpdater";
 
 function App() {
   return (
-    <div style={{backgroundColor: `${ColoringData.Theme.light.baseColor}`}}>
+    <div style={{ backgroundColor: `${ColoringData.Theme.light.baseColor}` }}>
+      <UserStatusUpdater />
+
       <Router>
         <Routes>
           <Route path="/auth" element={<Auth />}>

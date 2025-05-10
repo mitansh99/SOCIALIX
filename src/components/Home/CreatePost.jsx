@@ -26,6 +26,7 @@ const CreatePost = () => {
     const postData = {
       text: postText.trim(),
       userId: currentUser?.userId || "unknown",
+      fullName: currentUser?.fullName || "Anonymous",
       username: currentUser.username || "Anonymous",
       createdAt: new Date(),
       likeCount: [],
@@ -50,8 +51,8 @@ const CreatePost = () => {
       <div className={`flex items-start space-x-3 ${
           isLoading ? "opacity-30" : ""
         }`}>
-        <div className="h-10 w-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-          <img src={USER} alt="user" className="h-full w-full object-cover" />
+        <div className="h-10 w-10 rounded-full bg-[#0a0147] flex justify-center items-center text-white font-semibold text-lg">
+          {currentUser?.fullName ? currentUser.fullName.charAt(0).toUpperCase() : "U"}
         </div>
 
         <div className="flex-1">
