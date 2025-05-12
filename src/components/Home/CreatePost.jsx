@@ -5,6 +5,7 @@ import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import { useNavigate } from "react-router-dom";
 import loadingGif from "../../assets/loading.gif"
+import ToastManager from "../others/Toast";
 
 const CreatePost = () => {
   const [postText, setPostText] = useState("");
@@ -35,6 +36,7 @@ const CreatePost = () => {
       await addDoc(collection(db, "posts"), postData);
       setPostText("");
       setIsLoading(false);
+      window.showToast("Post Created Successfully!", "success")
     } catch (error) {
       console.error("❌ Failed to create post:", error.message);
       setIsLoading(false);
@@ -43,6 +45,7 @@ const CreatePost = () => {
 
   return (
     <div className="relative bg-white rounded-lg border border-gray-200 shadow-sm mb-6 p-4" >
+      <ToastManager />
        {isLoading && (
               <div className="absolute inset-0 flex items-center justify-center z-10 backdrop-blur-[2px] " >
                 <img src={loadingGif} alt="loading" className="w-20 sm:w-32" />
@@ -75,7 +78,7 @@ const CreatePost = () => {
               <button
                 type="submit"
                 disabled={!postText.trim()}
-                className={`px-4 py-2 rounded-lg font-medium text-sm ${
+                className={`px-4 py-2 rounded-lg font-medium text-sm cursor-pointer ${
                   postText.trim()
                     ? `bg-[#0a0147] text-white hover:bg-[#0a0147]`  // Custom HEX color
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"

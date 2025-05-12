@@ -42,7 +42,7 @@ const SidebarLeft = ({ onNavigate ,activeComponent}) => {
   }, [currentUser]);
 
   return (
-    <div className="pr-4">
+    <div className="px-2 py-5 ">
       <div className="flex flex-col items-center mb-6">
         <div
           className="h-20 w-20 rounded-full bg-[#0a0147] flex justify-center items-center text-white font-semibold text-3xl mb-5"
@@ -58,7 +58,7 @@ const SidebarLeft = ({ onNavigate ,activeComponent}) => {
           @{currentUser?.username || "username"}
         </p>
 
-        <div className="flex justify-between w-full mt-4">
+        <div className="flex justify-between w-full mt-4 px-5">
           <div className="flex flex-col items-center">
             <span className="font-bold">{followingCount}</span>
             <span className="text-xs text-gray-500">Following</span>

@@ -1,4 +1,3 @@
-// /src/components/SidebarRight.jsx
 import { useEffect, useState } from 'react';
 import {
   collection,
@@ -8,7 +7,7 @@ import {
   doc,
   updateDoc,
   arrayUnion,
-  arrayRemove
+  arrayRemove,
 } from 'firebase/firestore';
 import { ref, onValue } from "firebase/database";
 import { db, realtimeDb } from '../../firebase/config';
@@ -21,16 +20,22 @@ const SidebarRight = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [onlineStatus, setOnlineStatus] = useState({});
-
   const { currentUser } = useAuth();
 
   // 🔄 **Fetch Suggested Users**
   useEffect(() => {
+    if (!currentUser?.userId) return;
+
     const q = query(collection(db, 'users'), orderBy('fullName', 'asc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const usersList = snapshot.docs
         .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .filter((user) => user.id !== currentUser.userId);
+        .filter(
+          (user) =>
+            user.id !== currentUser.userId &&  !currentUser.following?.includes(user.id)
+
+        );
+
       setSuggestedUsers(usersList);
       setLoadingUsers(false);
 
@@ -51,16 +56,36 @@ const SidebarRight = () => {
     return () => unsubscribe();
   }, [currentUser]);
 
+  // 🔄 **Listen for Changes in Firestore**
+  useEffect(() => {
+    if (!currentUser?.userId) return;
+
+    const userDocRef = doc(db, "users", currentUser.userId);
+    const unsubscribe = onSnapshot(userDocRef, (doc) => {
+      if (doc.exists()) {
+        currentUser.following = doc.data().following || [];
+        setSuggestedUsers((prevUsers) =>
+          prevUsers.map((user) => ({
+            ...user,
+            isFollowing: currentUser.following.includes(user.id),
+          }))
+        );
+      }
+    });
+
+    return () => unsubscribe();
+  }, [currentUser]);
+
   // 🔄 **Follow / Unfollow Logic**
   const toggleFollow = async (userId) => {
     if (!currentUser?.userId) return;
 
     setActionLoading(userId);
 
-    const userDocRef = doc(db, 'users', currentUser.userId); 
+    const userDocRef = doc(db, 'users', currentUser.userId);
     const targetUserDocRef = doc(db, 'users', userId);
 
-    const isFollowing = currentUser.following?.includes(userId);
+    const isFollowing = currentUser.following.includes(userId);
 
     try {
       if (isFollowing) {
@@ -70,7 +95,6 @@ const SidebarRight = () => {
         await updateDoc(targetUserDocRef, {
           followers: arrayRemove(currentUser.userId),
         });
-        currentUser.following = currentUser.following.filter((id) => id !== userId);
       } else {
         await updateDoc(userDocRef, {
           following: arrayUnion(userId),
@@ -78,7 +102,6 @@ const SidebarRight = () => {
         await updateDoc(targetUserDocRef, {
           followers: arrayUnion(currentUser.userId),
         });
-        currentUser.following.push(userId);
       }
     } catch (err) {
       console.error('Follow/Unfollow operation failed:', err);
@@ -97,8 +120,18 @@ const SidebarRight = () => {
 
   // 🔄 **Dummy News Data**
   const news = [
-    { id: 1, title: 'Five questions you should answer truthfully', time: '2h', image: '/api/placeholder/320/160' },
-    { id: 2, title: 'Ten unbelievable facts about mountains', time: '2h', image: '/api/placeholder/320/160' },
+    {
+      id: 1,
+      title: 'Five questions you should answer truthfully',
+      time: '2h',
+      image: '/api/placeholder/320/160',
+    },
+    {
+      id: 2,
+      title: 'Ten unbelievable facts about mountains',
+      time: '2h',
+      image: '/api/placeholder/320/160',
+    },
   ];
 
   // 🔄 **UI Rendering**
@@ -108,22 +141,22 @@ const SidebarRight = () => {
         <h3 className="font-bold text-base mb-4">Who to follow</h3>
 
         {loadingUsers ? (
-          <div>Loading users...</div>
+          <div className='text-xs '>Loading users...</div>
         ) : (
           <div className="space-y-4">
             {suggestedUsers.slice(0, visibleUsers).map((user) => {
-              const isFollowing = currentUser.following?.includes(user.id);
+              const isFollowing = currentUser.following.includes(user.id);
               const isLoading = actionLoading === user.id;
               const isOnline = onlineStatus[user.id] ?? false;
+              const profileInitial = user.username.charAt(0).toUpperCase();
 
-               const profileInitial = user.username.charAt(0).toUpperCase();
               return (
                 <div key={user.id} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="relative">
-                      <div className="h-10 w-10 rounded-full bg-gray-300 text-gray-600 flex justify-center items-center  font-semibold text-lg">
-              {profileInitial}
-            </div>
+                      <div className="h-10 w-10 rounded-full bg-gray-300 text-gray-600 flex justify-center items-center font-semibold text-lg">
+                        {profileInitial}
+                      </div>
                       {isOnline && (
                         <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white" />
                       )}
@@ -156,6 +189,7 @@ const SidebarRight = () => {
                 </div>
               );
             })}
+            {!suggestedUsers.length > 0 && (<div className='text-center text-xs text-gray-400'>No User Found</div>)}
           </div>
         )}
 
@@ -169,27 +203,15 @@ const SidebarRight = () => {
         )}
       </div>
 
-      {/* 📰 News Section (Retained as Requested) */}
       <div>
         <h3 className="font-bold text-base mb-4">Today's news</h3>
         <div className="space-y-4">
           {news.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
-            >
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-full h-32 object-cover"
-              />
+            <div key={item.id} className="bg-white rounded-xl overflow-hidden shadow-sm">
+              <img src={item.image} alt={item.title} className="w-full h-32 object-cover" />
               <div className="p-3">
                 <h4 className="font-medium text-sm">{item.title}</h4>
-                <div className="flex items-center mt-2">
-                  <div className="bg-gray-100 text-xs px-2 py-1 rounded-full text-gray-500">
-                    {item.time}
-                  </div>
-                </div>
+                <div className="text-xs text-gray-500">{item.time}</div>
               </div>
             </div>
           ))}

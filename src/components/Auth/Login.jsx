@@ -9,6 +9,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { getDocs, collection, query, where } from "firebase/firestore";
 import bcrypt from "bcryptjs";
 import { db } from "../../firebase/config";
+import ToastManager from "../others/Toast";
 
 const LoginForm = () => {
   const email = useRef();
@@ -56,7 +57,10 @@ const LoginForm = () => {
           setCurrentUser(userData);
           userData.password = passwordValue;
           userData.userId = userDoc.id;
-          localStorage.setItem("userData",JSON.stringify(userData));
+          const {userId , fullName , username , email ,password} = userData
+          localStorage.setItem("userData",JSON.stringify({userId , fullName , username , email ,password}));
+          window.showToast("User Login success!", "success");
+
           navigate("/home");
         } else {
           setError("User data not found in Firestore.");
@@ -74,6 +78,7 @@ const LoginForm = () => {
       className="min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 py-10 relative"
       style={{ backgroundColor: ColoringData.Theme.light.baseColor }}
     >
+      <ToastManager />
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center z-10 backdrop-blur-[2px]">
           <img src={loadingGif} alt="loading" className="w-20 sm:w-32" />
