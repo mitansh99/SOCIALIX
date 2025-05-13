@@ -72,7 +72,7 @@ function MainApp() {
         <Route path="login" element={<LoginForm />} />
       </Route>
       <Route path="/home" element={<Home />} />
-      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/profile/:userId" element={<ProfilePage />} />
     </Routes>
   );
 }

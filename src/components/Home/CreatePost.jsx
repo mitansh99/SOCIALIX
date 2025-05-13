@@ -60,14 +60,14 @@ const CreatePost = () => {
 
         <div className="flex-1">
           <div className="mb-2">
-            <span className="font-medium text-sm">
+            <span className="font-medium text-md font-bold">
               {currentUser?.fullName || "Name"}
             </span>
           </div>
 
           <form onSubmit={handleSubmit}>
             <textarea
-              className="w-full px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition-all resize-none"
+              className="w-full text-sm px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition-all resize-none"
               placeholder="What's on your mind?"
               value={postText}
               onChange={(e) => setPostText(e.target.value)}
