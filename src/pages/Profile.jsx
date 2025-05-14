@@ -16,6 +16,8 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
+import "../App.css";
+import MobileNav from "../components/Home/MobileNav";
 
 export default function ProfilePage() {
   const { userId } = useParams();
@@ -91,11 +93,14 @@ export default function ProfilePage() {
     setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
     setIsFetching(false);
   };
-
+  const handleBack = () => {
+    navigate(-1); // Navigates back to the previous page in history
+  };
   // ✅ **Scroll Event to Trigger Post Fetching**
   const handleScroll = () => {
     const bottom =
-      document.documentElement.scrollHeight === document.documentElement.scrollTop + window.innerHeight;
+      document.documentElement.scrollHeight ===
+      document.documentElement.scrollTop + window.innerHeight;
     if (bottom) {
       fetchMorePosts();
     }
@@ -114,15 +119,21 @@ export default function ProfilePage() {
       <Navbar />
 
       {/* Profile Section */}
-      {loading || !user ||user === undefined ? (
+      {loading || !user || user === undefined ? (
         <div className="absolute inset-0 flex items-center justify-center z-10 bg-gray-50">
           <img src={loadingGif} alt="loading" className="w-20 sm:w-32" />
         </div>
       ) : (
         <div className="bg-white pt-5">
+          <button
+            onClick={handleBack}
+            className="text-[#0a0147] ml-5 hidden md:block underline px-4 py-2 rounded-lg font-semibold  transition"
+          >
+            ← Back
+          </button>
           <div className="container mx-auto px-4 md:px-6">
             {/* Cover Image */}
-            <div className="h-36 md:h-48 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg relative">
+            <div className={`h-36 md:h-48 rounded-lg relative bg-gray-100`}>
               <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
                 <div className="bg-[#0a0147] text-white h-24 w-24 rounded-full flex items-center justify-center text-3xl font-semibold border-4 border-[#fe696e]">
                   {user.fullName.charAt(0).toUpperCase()}
@@ -131,9 +142,12 @@ export default function ProfilePage() {
             </div>
 
             <div className="pt-16 pb-6 text-center">
-              <h1 className="text-2xl font-bold text-gray-900">{user.fullName}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {user.fullName}
+              </h1>
               <p className="text-gray-500 text-xs mt-1">
-                @{user.username} · Joined {user.createdAt.toDate().toLocaleDateString("en-GB")}
+                @{user.username} · Joined{" "}
+                {user.createdAt.toDate().toLocaleDateString("en-GB")}
               </p>
 
               <p className="mt-4 text-gray-700 max-w-lg mx-auto text-md ">
@@ -165,7 +179,7 @@ export default function ProfilePage() {
       )}
 
       {/* Posts Section */}
-      <main className="container mx-auto px-4 md:px-10 py-6">
+      <main className="container mx-auto px-4 md:px-10 py-6 md:mb-0 mb-10">
         <div className="max-w-xl mx-auto">
           <div className="lg:col-span-2 space-y-6">
             <div>
@@ -176,10 +190,7 @@ export default function ProfilePage() {
               <div className="space-y-4">
                 {posts.length > 0 ? (
                   posts.map((post) => (
-                    <SocialMediaPostCard
-                      key={post.id}
-                      {...post}
-                    />
+                    <SocialMediaPostCard key={post.id} {...post} />
                   ))
                 ) : (
                   <p>No posts available.</p>
@@ -196,6 +207,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
+      <MobileNav />
     </div>
   );
 }

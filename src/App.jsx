@@ -2,7 +2,12 @@ import React, { useEffect } from "react";
 import { db } from "./firebase/config";
 import LoginForm from "./components/Auth/Login";
 import RegisterForm from "./components/Auth/Register";
-import { BrowserRouter as Router, Route, Routes, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  useNavigate,
+} from "react-router-dom";
 import Auth from "./pages/Auth";
 import Home from "./pages/Home";
 import { ColoringData } from "./StaticData";
@@ -11,6 +16,9 @@ import ProfilePage from "./pages/Profile";
 import { useAuth } from "./context/AuthContext";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import bcrypt from "bcryptjs";
+import MobileSearchPage from "./pages/MobileSearchPage";
+import loadingGif from "./assets/loading.gif";
+import MobileFriends from "./components/Home/MobileFriends";
 
 function App() {
   return (
@@ -31,7 +39,7 @@ function MainApp() {
     (async () => {
       if (!currentUser) {
         const data = JSON.parse(localStorage.getItem("userData"));
-        
+
         if (data) {
           const q = query(
             collection(db, "users"),
@@ -66,14 +74,26 @@ function MainApp() {
   }, [currentUser, navigate, setCurrentUser]);
 
   return (
-    <Routes>
-      <Route path="/auth" element={<Auth />}>
-        <Route path="register" element={<RegisterForm />} />
-        <Route path="login" element={<LoginForm />} />
-      </Route>
-      <Route path="/home" element={<Home />} />
-      <Route path="/profile/:userId" element={<ProfilePage />} />
-    </Routes>
+    <>
+      {currentUser === null ? (
+        <div className="absolute inset-0 flex items-center justify-center z-10">
+          <img src={loadingGif} alt="loading" className="w-20 sm:w-32" />
+        </div>
+      ) : (
+        <Routes>
+          <Route path="/auth" element={<Auth />}>
+            <Route path="register" element={<RegisterForm />} />
+            <Route path="login" element={<LoginForm />} />
+          </Route>
+          <Route path="/home" element={<Home />} />
+          <Route path="/profile/:userId" element={<ProfilePage />} />
+          //use for only mobile
+          <Route path="/mobieSearch" element={<MobileSearchPage />} />
+          <Route path="/friends" element={<MobileFriends />} />
+
+        </Routes>
+      )}
+    </>
   );
 }
 

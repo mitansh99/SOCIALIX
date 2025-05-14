@@ -129,7 +129,7 @@ const Feed = () => {
   }, [lastDoc, isFetching]);
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-3">
+    <div className="max-w-xl mx-auto px-4 py-3 md:mb-0 mb-10">
       <CreatePost />
       <h1 className="text-xl font-bold mb-5">Feed</h1>
 

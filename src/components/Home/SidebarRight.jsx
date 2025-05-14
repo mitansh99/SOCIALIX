@@ -170,7 +170,7 @@ const SidebarRight = () => {
                   <button
                     onClick={() => toggleFollow(user.id)}
                     disabled={isLoading}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
                       isLoading
                         ? 'bg-gray-200 text-gray-500 cursor-wait'
                         : isFollowing
