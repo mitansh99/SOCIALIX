@@ -17,7 +17,7 @@ const RegisterForm = () => {
     userPassWord: useRef(""),
     fullName: useRef(""),
     phoneNumber: useRef(""),
-    bio: useRef("")
+    bio: useRef(""),
   };
 
   const [error, setError] = useState("");
@@ -29,14 +29,16 @@ const RegisterForm = () => {
       email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
       password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
       phone: /^\d{10}$/,
-      username: /^\S+$/
+      username: /^\S+$/,
     };
 
     const errors = [];
 
     if (!patterns.email.test(email)) errors.push("Invalid email format.");
     if (!patterns.password.test(password))
-      errors.push("Password must be at least 8 characters long with upper, lower, number, and special character.");
+      errors.push(
+        "Password must be at least 8 characters long with upper, lower, number, and special character."
+      );
     if (!patterns.phone.test(phone)) errors.push("Phone number must be 10 digits.");
     if (!patterns.username.test(username)) errors.push("Username must not contain spaces.");
 
@@ -52,7 +54,7 @@ const RegisterForm = () => {
       email: refs.userEmail.current.value,
       password: refs.userPassWord.current.value,
       phone: refs.phoneNumber.current.value,
-      username: refs.userName.current.value
+      username: refs.userName.current.value,
     };
 
     const validationErrors = validateData(values);
@@ -75,7 +77,7 @@ const RegisterForm = () => {
         password: hashedPassword,
         followers: [],
         following: [],
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       const docRef = await addDoc(collection(db, "users"), userObj);
@@ -83,7 +85,7 @@ const RegisterForm = () => {
 
       if (docSnap.exists()) {
         clearForm();
-         window.showToast("User Login success!", "success");
+        window.showToast("User Registration Successful!", "success");
         navigate("/auth/login");
       } else {
         throw new Error("User document not found");
@@ -97,10 +99,10 @@ const RegisterForm = () => {
   };
 
   const Input = ({ label, icon, type = "text", refEl }) => (
-    <div className="mb-2 sm:mb-3">
+    <div className="mb-3 md:mb-4">
       <label className="block mb-1 text-xs sm:text-sm text-gray-600">{label}</label>
-      <div className="flex items-center border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus-within:shadow-md">
-        <span className="text-gray-400 mr-2 sm:mr-3">{icon}</span>
+      <div className="flex items-center border border-gray-300 rounded-lg px-2 sm:px-3 py-2 focus-within:shadow-md transition-shadow">
+        <span className="text-gray-400 mr-1 sm:mr-2">{icon}</span>
         <input
           type={type}
           placeholder={`Enter ${label.toLowerCase()}`}
@@ -113,66 +115,73 @@ const RegisterForm = () => {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4 py-10 relative"
+      className="min-h-screen flex items-center justify-center px-3 sm:px-4 py-8 sm:py-10"
       style={{ backgroundColor: ColoringData.Theme.light.baseColor }}
     >
       <ToastManager />
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center z-10 backdrop-blur-[2px]">
-          <img src={loadingGif} alt="loading" className="w-20 sm:w-32" />
+        <div className="fixed inset-0 flex items-center justify-center z-10 backdrop-blur-[2px]">
+          <img src={loadingGif} alt="loading" className="w-16 sm:w-20 md:w-32" />
         </div>
       )}
 
       <div
-        className={`bg-white p-5 sm:p-8 rounded-xl shadow-md w-full max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 ${
+        className={`bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-md w-full max-w-xs sm:max-w-lg md:max-w-2xl lg:max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 ${
           isLoading ? "opacity-30" : ""
         }`}
       >
-        <div className="col-span-2 mb-5">
-          <h1 className="text-3xl font-bold text-slate-800">Create Your Account</h1>
-          <p className="text-sm text-gray-400 mt-1">
+        <div className="col-span-1 md:col-span-2 mb-3 sm:mb-5">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800">
+            Create Your Account
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-400 mt-1">
             Join the community — connect, share, and explore with people around the world.
           </p>
         </div>
 
-        <div className="space-y-3">
-          <Input label="Username" icon={<CiUser />} refEl={refs.userName} />
-          <Input label="Email" icon={<CiMail />} type="email" refEl={refs.userEmail} />
-          <Input label="Password" icon={<PiPasswordThin />} type="password" refEl={refs.userPassWord} />
+        <div className="space-y-1 sm:space-y-2">
+          <Input label="Username" icon={<CiUser size={18} />} refEl={refs.userName} />
+          <Input label="Email" icon={<CiMail size={18} />} type="email" refEl={refs.userEmail} />
+          <Input 
+            label="Password" 
+            icon={<PiPasswordThin size={18} />} 
+            type="password" 
+            refEl={refs.userPassWord} 
+          />
         </div>
 
-        <div className="space-y-3">
-          <Input label="Full Name" icon={<CiUser />} refEl={refs.fullName} />
-          <Input label="Phone Number" icon={<CiPhone />} type="tel" refEl={refs.phoneNumber} />
+        <div className="space-y-1 sm:space-y-2">
+          <Input label="Full Name" icon={<CiUser size={18} />} refEl={refs.fullName} />
+          <Input label="Phone Number" icon={<CiPhone size={18} />} type="tel" refEl={refs.phoneNumber} />
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Short Bio</label>
+            <label className="block text-xs sm:text-sm text-gray-600 mb-1">Short Bio</label>
             <textarea
               ref={refs.bio}
               placeholder="Short bio"
-              className="w-full text-sm p-3 border border-gray-300 rounded-md resize-none outline-none placeholder-gray-400 focus:shadow-md"
+              className="w-full text-xs sm:text-sm p-2 sm:p-3 border border-gray-300 rounded-md resize-none outline-none placeholder-gray-400 focus:shadow-md transition-shadow"
               rows={3}
             />
           </div>
         </div>
 
         {error && (
-          <div className="col-span-2 text-red-600 bg-red-100 p-3 text-sm rounded-md whitespace-pre-line">
+          <div className="col-span-1 md:col-span-2 text-red-600 bg-red-50 p-2 sm:p-3 text-xs sm:text-sm rounded-md whitespace-pre-line">
             {error}
           </div>
         )}
 
-        <div className="col-span-2 mt-3">
+        <div className="col-span-1 md:col-span-2 mt-2 sm:mt-3">
           <button
             style={{ backgroundColor: ColoringData.Theme.light.primarColor }}
-            className="w-full text-white py-3 rounded-lg font-medium hover:shadow-md text-sm cursor-pointer"
+            className="w-full text-white py-2 md:py-3 rounded-lg font-medium hover:shadow-md text-xs sm:text-sm cursor-pointer transition-shadow"
             onClick={handleRegister}
           >
             Create Account
           </button>
         </div>
 
-        <div className="col-span-2 mt-2 flex justify-center">
-          <p className="text-sm text-gray-600">
+        <div className="col-span-1 md:col-span-2 mt-2 flex justify-center">
+          <p className="text-xs sm:text-sm text-gray-600">
             Already have an account?{" "}
             <Link
               to="/auth/login"

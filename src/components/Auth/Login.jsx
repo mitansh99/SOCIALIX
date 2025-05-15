@@ -110,7 +110,7 @@ const LoginForm = () => {
 
         <button
           style={{ backgroundColor: ColoringData.Theme.light.primarColor }}
-          className="w-full text-white py-2 sm:py-3 rounded-lg font-semibold hover:bg-indigo-700 transition text-xs sm:text-sm md:text-base"
+          className="w-full text-white py-2 sm:py-3 rounded-lg font-semibold hover:bg-indigo-700 transition text-xs sm:text-sm md:text-base cursor-pointer"
           onClick={handleLogin}
         >
           Login
