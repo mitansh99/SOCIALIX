@@ -3,7 +3,6 @@ import { CiMail } from "react-icons/ci";
 import { PiPasswordThin } from "react-icons/pi";
 import { ColoringData } from "../../StaticData";
 import loadingGif from "../../assets/loading.gif";
-import { loginUser } from "../../firebase/authUtils";
 import { useAuth } from "../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { getDocs, collection, query, where } from "firebase/firestore";
@@ -100,12 +99,6 @@ const LoginForm = () => {
         <Input label="Email" icon={<CiMail />} type="email" refEl={email} />
         <Input label="Password" icon={<PiPasswordThin />} type="password" refEl={password} />
 
-        <div className="flex justify-end mb-3 sm:mb-4">
-          <a href="#" className="text-xs sm:text-sm hover:underline transition"
-            style={{ color: ColoringData.Theme.light.secondaryColor }}>
-            Forgot password?
-          </a>
-        </div>
 
         {error && (
           <div className="text-red-600 bg-red-100 p-2 sm:p-3 text-xs sm:text-sm my-3 sm:my-5 rounded-md">

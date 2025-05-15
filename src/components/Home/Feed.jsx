@@ -14,6 +14,7 @@ import SocialMediaPostCard from "./SocialMediaPostCard";
 import CreatePost from "./CreatePost";
 import { db } from "../../firebase/config";
 import { useAuth } from "../../context/AuthContext";
+import SkeletonLoader from "./SkeletonLoader";
 
 const Feed = () => {
   const [posts, setPosts] = useState([]);
@@ -24,6 +25,7 @@ const Feed = () => {
 
   // 🔄 **Initial Fetch for First 10 Posts**
   useEffect(() => {
+    try {
     setLoading(true);
 
     const q = query(
@@ -41,11 +43,16 @@ const Feed = () => {
 
         setPosts(postData);
         setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-        setLoading(false);
+        
       }
     });
-
+    
     return () => unsubscribe();
+  }catch(err){
+    console.log(err);
+  }finally{
+    setLoading(false);
+  }
   }, [currentUser]);
 
   // 🔄 **Handle Like Toggle**
@@ -133,8 +140,8 @@ const Feed = () => {
       <CreatePost />
       <h1 className="text-xl font-bold mb-5">Feed</h1>
 
-      {loading && posts.length === 0 ? (
-        <div className="text-center">Loading...</div>
+      {loading  ? (
+       <SkeletonLoader />
       ) : (
         <div className="space-y-6">
           {posts.map((post) => (
@@ -146,7 +153,7 @@ const Feed = () => {
           ))}
         </div>
       )}
-
+      {posts.length <= 0 && <div className="text-center text-gray-400">No post found</div>}
       {isFetching && (
         <div className="text-center">Loading more posts...</div>
       )}

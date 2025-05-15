@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   collection,
   onSnapshot,
@@ -8,10 +8,11 @@ import {
   updateDoc,
   arrayUnion,
   arrayRemove,
-} from 'firebase/firestore';
+} from "firebase/firestore";
 import { ref, onValue } from "firebase/database";
-import { db, realtimeDb } from '../../firebase/config';
-import { useAuth } from '../../context/AuthContext';
+import { db, realtimeDb } from "../../firebase/config";
+import { useAuth } from "../../context/AuthContext";
+import DynamicNews from "./DynamicNews";
 
 const SidebarRight = () => {
   const [suggestedUsers, setSuggestedUsers] = useState([]);
@@ -23,22 +24,23 @@ const SidebarRight = () => {
   const { currentUser } = useAuth();
 
   // 🔄 **Fetch Suggested Users**
-  useEffect(() => {
-    if (!currentUser?.userId) return;
+  if (!currentUser?.userId) return;
 
-    const q = query(collection(db, 'users'), orderBy('fullName', 'asc'));
+
+  useEffect(() => {
+    setLoadingUsers(true);
+    const q = query(collection(db, "users"), orderBy("fullName", "asc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const usersList = snapshot.docs
         .map((doc) => ({ id: doc.id, ...doc.data() }))
         .filter(
           (user) =>
-            user.id !== currentUser.userId &&  !currentUser.following?.includes(user.id)
-
+            user.id !== currentUser.userId &&
+            !currentUser.following?.includes(user.id)
         );
 
       setSuggestedUsers(usersList);
-      setLoadingUsers(false);
-
+      setLoadingUsers(false)
       // 🟢 Fetch online status for each user
       usersList.forEach((user) => {
         const userStatusRef = ref(realtimeDb, `/onlineUsers/${user.id}`);
@@ -82,8 +84,8 @@ const SidebarRight = () => {
 
     setActionLoading(userId);
 
-    const userDocRef = doc(db, 'users', currentUser.userId);
-    const targetUserDocRef = doc(db, 'users', userId);
+    const userDocRef = doc(db, "users", currentUser.userId);
+    const targetUserDocRef = doc(db, "users", userId);
 
     const isFollowing = currentUser.following.includes(userId);
 
@@ -104,7 +106,7 @@ const SidebarRight = () => {
         });
       }
     } catch (err) {
-      console.error('Follow/Unfollow operation failed:', err);
+      console.error("Follow/Unfollow operation failed:", err);
     } finally {
       setActionLoading(null);
     }
@@ -118,30 +120,32 @@ const SidebarRight = () => {
     setIsExpanded(!isExpanded);
   };
 
-  // 🔄 **Dummy News Data**
-  const news = [
-    {
-      id: 1,
-      title: 'Five questions you should answer truthfully',
-      time: '2h',
-      image: '/api/placeholder/320/160',
-    },
-    {
-      id: 2,
-      title: 'Ten unbelievable facts about mountains',
-      time: '2h',
-      image: '/api/placeholder/320/160',
-    },
-  ];
 
   // 🔄 **UI Rendering**
   return (
     <div className="pl-2">
       <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
         <h3 className="font-bold text-base mb-4">Who to follow</h3>
-
         {loadingUsers ? (
-          <div className='text-xs '>Loading users...</div>
+          <div className="flex items-center justify-between animate-pulse mb-3">
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                {/* Profile Picture */}
+                <div className="h-10 w-10 rounded-full bg-gray-300"></div>
+                {/* Online Indicator */}
+                <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-gray-300 border-2 border-white" />
+              </div>
+              <div>
+                {/* Full Name */}
+                <div className="h-4 bg-gray-300 rounded w-24 mb-1"></div>
+                {/* Username */}
+                <div className="h-3 bg-gray-200 rounded w-20"></div>
+              </div>
+            </div>
+
+            {/* Follow Button */}
+            <div className="h-7 w-20 bg-gray-200 rounded-full"></div>
+          </div>
         ) : (
           <div className="space-y-4">
             {suggestedUsers.slice(0, visibleUsers).map((user) => {
@@ -151,7 +155,10 @@ const SidebarRight = () => {
               const profileInitial = user.username.charAt(0).toUpperCase();
 
               return (
-                <div key={user.id} className="flex items-center justify-between">
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between"
+                >
                   <div className="flex items-center space-x-3">
                     <div className="relative">
                       <div className="h-10 w-10 rounded-full bg-gray-300 text-gray-600 flex justify-center items-center font-semibold text-lg">
@@ -163,7 +170,9 @@ const SidebarRight = () => {
                     </div>
                     <div>
                       <div className="font-medium text-sm">{user.fullName}</div>
-                      <div className="text-gray-500 text-xs">@{user.username}</div>
+                      <div className="text-gray-500 text-xs">
+                        @{user.username}
+                      </div>
                     </div>
                   </div>
 
@@ -172,24 +181,28 @@ const SidebarRight = () => {
                     disabled={isLoading}
                     className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
                       isLoading
-                        ? 'bg-gray-200 text-gray-500 cursor-wait'
+                        ? "bg-gray-200 text-gray-500 cursor-wait"
                         : isFollowing
-                        ? 'bg-[#0a0147] text-white hover:bg-[#0a0147]'
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                        ? "bg-[#0a0147] text-white hover:bg-[#0a0147]"
+                        : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                     }`}
                   >
                     {isLoading
                       ? isFollowing
-                        ? 'Unfollowing...'
-                        : 'Following...'
+                        ? "Unfollowing..."
+                        : "Following..."
                       : isFollowing
-                      ? 'Following'
-                      : 'Follow'}
+                      ? "Following"
+                      : "Follow"}
                   </button>
                 </div>
               );
             })}
-            {!suggestedUsers.length > 0 && (<div className='text-center text-xs text-gray-400'>No User Found</div>)}
+            {!suggestedUsers.length > 0 && (
+              <div className="text-center text-xs text-gray-400">
+                No User Found
+              </div>
+            )}
           </div>
         )}
 
@@ -198,24 +211,14 @@ const SidebarRight = () => {
             onClick={handleToggleView}
             className="text-blue-500 text-sm font-medium mt-4 w-full text-center pt-2 border-t border-gray-100"
           >
-            {isExpanded ? 'Show Less' : 'View More'}
+            {isExpanded ? "Show Less" : "View More"}
           </button>
         )}
       </div>
 
       <div>
         <h3 className="font-bold text-base mb-4">Today's news</h3>
-        <div className="space-y-4">
-          {news.map((item) => (
-            <div key={item.id} className="bg-white rounded-xl overflow-hidden shadow-sm">
-              <img src={item.image} alt={item.title} className="w-full h-32 object-cover" />
-              <div className="p-3">
-                <h4 className="font-medium text-sm">{item.title}</h4>
-                <div className="text-xs text-gray-500">{item.time}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+       <DynamicNews />
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { db } from "./firebase/config";
 import LoginForm from "./components/Auth/Login";
 import RegisterForm from "./components/Auth/Register";
@@ -34,48 +34,61 @@ function App() {
 function MainApp() {
   const { currentUser, setCurrentUser } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = React.useState(true); // <-- Add this
 
   useEffect(() => {
     (async () => {
       if (!currentUser) {
         const data = JSON.parse(localStorage.getItem("userData"));
-
         if (data) {
-          const q = query(
-            collection(db, "users"),
-            where("email", "==", data.email)
-          );
-          const querySnapshot = await getDocs(q);
+          try {
+            const q = query(
+              collection(db, "users"),
+              where("email", "==", data.email)
+            );
+            const querySnapshot = await getDocs(q);
 
-          if (querySnapshot.empty) {
-            navigate("/auth/login");
-            return;
+            if (querySnapshot.empty) {
+              setLoading(false); // <-- Stop loading before navigation
+              navigate("/auth/register");
+              return;
+            }
+
+            const userDoc = querySnapshot.docs[0];
+            const userData = userDoc.data();
+
+            const isPasswordCorrect = bcrypt.compareSync(
+              data.password,
+              userData.password
+            );
+            if (!isPasswordCorrect) {
+              setLoading(false); // <-- Stop loading before navigation
+              navigate("/auth/login");
+              return;
+            }
+
+            userData.userId = userDoc.id;
+            setCurrentUser(userData);
+          } catch (error) {
+            console.log(error);
+            setLoading(false); // <-- Stop loading before navigation
+            navigate("/auth/register");
+          } finally {
+            setLoading(false); // <-- Always stop loading at the end
           }
-
-          const userDoc = querySnapshot.docs[0];
-          const userData = userDoc.data();
-
-          const isPasswordCorrect = bcrypt.compareSync(
-            data.password,
-            userData.password
-          );
-          if (!isPasswordCorrect) {
-            navigate("/auth/login");
-            return;
-          }
-
-          userData.userId = userDoc.id;
-          setCurrentUser(userData);
         } else {
+          setLoading(false); // <-- Stop loading if no local data
           navigate("/auth/login");
         }
+      } else {
+        setLoading(false); // <-- User already found
       }
     })();
   }, [currentUser, navigate, setCurrentUser]);
 
   return (
     <>
-      {currentUser === null ? (
+      {loading ? ( // <-- Use local loading state
         <div className="absolute inset-0 flex items-center justify-center z-10">
           <img src={loadingGif} alt="loading" className="w-20 sm:w-32" />
         </div>
@@ -87,14 +100,13 @@ function MainApp() {
           </Route>
           <Route path="/home" element={<Home />} />
           <Route path="/profile/:userId" element={<ProfilePage />} />
-          //use for only mobile
           <Route path="/mobieSearch" element={<MobileSearchPage />} />
           <Route path="/friends" element={<MobileFriends />} />
-
         </Routes>
       )}
     </>
   );
 }
+
 
 export default App;

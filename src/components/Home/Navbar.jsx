@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { CiSearch, CiBellOn } from "react-icons/ci";
+import { useState } from "react";
+import { CiSearch } from "react-icons/ci";
 import logo from "../../assets/LOGO.png";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -7,13 +7,11 @@ import { db } from "../../firebase/config";
 import loadingGif from "../../assets/searchLoading.gif";
 import {
   collection,
-  doc,
-  getDoc,
-  updateDoc,
-  arrayUnion,
-  onSnapshot,
   query,
   getDocs,
+  orderBy,
+  startAt,
+  endAt,
 } from "firebase/firestore";
 import debounce from "lodash.debounce";
 
@@ -81,8 +79,8 @@ const Navbar = () => {
   return (
     <nav className="bg-white border-b border-gray-200 py-2 px-4 flex items-center justify-between relative">
       <div className="flex items-center">
-        <div className="p-2 rounded-lg">
-          <img src={logo} alt="Logo" width={"30px"} height={"30px"} />
+        <div className="p-2 rounded-lg ">
+          <img src={logo} alt="Logo" width={"28px"} height={"28px"} />
         </div>
       </div>
 

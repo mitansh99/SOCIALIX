@@ -14,6 +14,10 @@ import {
   limit,
   startAfter,
   getDocs,
+  updateDoc,
+  onSnapshot,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import "../App.css";
@@ -26,10 +30,11 @@ export default function ProfilePage() {
   const [lastDoc, setLastDoc] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
+  const [totalPostsCount, setTotalPostsCount] = useState(0); // ✅ Track Total Post Count
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  // ✅ **Fetch User Data**
+  // ✅ Fetch User Data
   useEffect(() => {
     const fetchUserData = async () => {
       setLoading(true);
@@ -47,30 +52,49 @@ export default function ProfilePage() {
     fetchUserData();
   }, [userId, navigate]);
 
-  // ✅ **Fetch User Posts**
+  // ✅ Fetch Total Post Count
   useEffect(() => {
-    const fetchPosts = async () => {
-      const q = query(
-        collection(db, "posts"),
-        where("userId", "==", userId),
-        orderBy("createdAt", "desc"),
-        limit(10)
-      );
+    const fetchPostCount = async () => {
+      const q = query(collection(db, "posts"), where("userId", "==", userId));
 
       const snapshot = await getDocs(q);
-      const fetchedPosts = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      setPosts(fetchedPosts);
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+      setTotalPostsCount(snapshot.size); // ✅ Set the total count of posts
     };
 
-    fetchPosts();
+    fetchPostCount();
   }, [userId]);
 
-  // ✅ **Fetch More Posts when scrolled to bottom**
+  // ✅ Fetch User Posts (Real-time)
+  useEffect(() => {
+    setLoading(true);
+    const q = query(
+      collection(db, "posts"),
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc"),
+      limit(5)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const postData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          likeCount: doc.data().likeCount || [],
+        }));
+
+        setPosts(postData);
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+      } else {
+        setPosts([]);
+        setLastDoc(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  // ✅ Fetch More Posts when scrolled to bottom
   const fetchMorePosts = async () => {
     if (isFetching || !lastDoc) return;
     setIsFetching(true);
@@ -84,42 +108,74 @@ export default function ProfilePage() {
     );
 
     const snapshot = await getDocs(q);
-    const newPosts = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    if (!snapshot.empty) {
+      const newPosts = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        likeCount: doc.data().likeCount || [],
+      }));
 
-    setPosts((prev) => [...prev, ...newPosts]);
-    setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+      setPosts((prev) => [...prev, ...newPosts]);
+      setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+    } else {
+      setLastDoc(null);
+    }
     setIsFetching(false);
   };
+
   const handleBack = () => {
-    navigate(-1); // Navigates back to the previous page in history
+    navigate(-1); // Go back
   };
-  // ✅ **Scroll Event to Trigger Post Fetching**
-  const handleScroll = () => {
-    const bottom =
-      document.documentElement.scrollHeight ===
-      document.documentElement.scrollTop + window.innerHeight;
-    if (bottom) {
-      fetchMorePosts();
+
+  // ✅ Scroll Event to Trigger Post Fetching
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop >=
+        document.documentElement.scrollHeight - 10
+      ) {
+        fetchMorePosts();
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastDoc, isFetching]);
+
+  const handleLikeToggle = async (postId, isLiked) => {
+    try {
+      const postRef = doc(db, "posts", postId);
+
+      // Optimistic UI update
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                likeCount: isLiked
+                  ? post.likeCount.filter((id) => id !== currentUser.userId)
+                  : [...post.likeCount, currentUser.userId],
+              }
+            : post
+        )
+      );
+
+      // Firestore update with arrayUnion / arrayRemove
+      await updateDoc(postRef, {
+        likeCount: isLiked
+          ? arrayRemove(currentUser.userId)
+          : arrayUnion(currentUser.userId),
+      });
+    } catch (error) {
+      console.error("Failed to update like status:", error);
     }
   };
-
-  useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [isFetching]);
-
-  // ✅ **Render Profile Page**
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
       {/* Profile Section */}
-      {loading || !user || user === undefined ? (
+      {loading || !user ? (
         <div className="absolute inset-0 flex items-center justify-center z-10 bg-gray-50">
           <img src={loadingGif} alt="loading" className="w-20 sm:w-32" />
         </div>
@@ -127,20 +183,21 @@ export default function ProfilePage() {
         <div className="bg-white pt-5">
           <button
             onClick={handleBack}
-            className="text-[#0a0147] ml-5 hidden md:block underline px-4 py-2 rounded-lg font-semibold  transition"
+            className="text-[#0a0147] ml-5 hidden md:block underline px-4 py-2 rounded-lg font-semibold cursor-pointer transition"
           >
             ← Back
           </button>
           <div className="container mx-auto px-4 md:px-6">
             {/* Cover Image */}
-            <div className={`h-36 md:h-48 rounded-lg relative bg-gray-100`}>
+            <div className={"h-36 md:h-48 rounded-lg relative bg-gray-100"}>
               <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
                 <div className="bg-[#0a0147] text-white h-24 w-24 rounded-full flex items-center justify-center text-3xl font-semibold border-4 border-[#fe696e]">
                   {user.fullName.charAt(0).toUpperCase()}
                 </div>
               </div>
             </div>
-
+          </div>
+          <div className="container mx-auto px-4 md:px-6">
             <div className="pt-16 pb-6 text-center">
               <h1 className="text-2xl font-bold text-gray-900">
                 {user.fullName}
@@ -169,7 +226,9 @@ export default function ProfilePage() {
                   <div className="text-sm text-gray-500">Following</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-bold text-gray-900">{posts.length}</div>
+                  <div className="font-bold text-gray-900">
+                    {totalPostsCount} {/* ✅ Show Total Posts Count */}
+                  </div>
                   <div className="text-sm text-gray-500">Posts</div>
                 </div>
               </div>
@@ -181,30 +240,24 @@ export default function ProfilePage() {
       {/* Posts Section */}
       <main className="container mx-auto px-4 md:px-10 py-6 md:mb-0 mb-10">
         <div className="max-w-xl mx-auto">
-          <div className="lg:col-span-2 space-y-6">
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">Your Posts</h2>
-              </div>
-
-              <div className="space-y-4">
-                {posts.length > 0 ? (
-                  posts.map((post) => (
-                    <SocialMediaPostCard key={post.id} {...post} />
-                  ))
-                ) : (
-                  <p>No posts available.</p>
-                )}
-              </div>
-
-              {/* Loading Spinner */}
-              {isFetching && (
-                <div className="flex justify-center mt-4">
-                  <img src={loadingGif} alt="loading" className="w-10" />
-                </div>
-              )}
-            </div>
+          <h2 className="text-xl font-bold text-gray-900 py-3  ">Your Posts</h2>
+          <div className="space-y-4">
+            {posts.length > 0 ? (
+              posts.map((post) => (
+                <SocialMediaPostCard key={post.id} {...post} handleLikeToggle={handleLikeToggle}/>
+              ))
+            ) : (
+              <p className="text-center text-sm text-gray-400">
+                No posts available.
+              </p>
+            )}
           </div>
+
+          {isFetching && (
+            <div className="flex justify-center mt-4">
+              Loading more posts...
+            </div>
+          )}
         </div>
       </main>
       <MobileNav />

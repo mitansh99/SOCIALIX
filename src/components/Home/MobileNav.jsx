@@ -22,7 +22,6 @@ const MobileNav = () => {
       navigate(routes[value]);
     }
   };
-const profileInitial = currentUser.fullName.charAt(0).toUpperCase();
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around p-3 md:hidden z-10">
       {/* Home Button */}
@@ -119,27 +118,6 @@ const profileInitial = currentUser.fullName.charAt(0).toUpperCase();
           Friends
         </span>
       </button>
-
-     
-
-      {/* Profile Button
-      <button
-        className="flex flex-col items-center justify-center"
-        onClick={() => navigate(`/profile/${currentUser.userId}`)}
-      >
-        <div
-          className={`h-6 w-6 rounded-full overflow-hidden bg-[#0a0147] text-white text-sm flex items-center justify-center `}
-        >
-          {profileInitial}
-        </div>
-        <span
-          className={`text-xs mt-1 ${
-            active === "profile" ? "text-blue-500" : "text-black"
-          }`}
-        >
-          Profile
-        </span>
-      </button> */}
     </div>
   );
 };

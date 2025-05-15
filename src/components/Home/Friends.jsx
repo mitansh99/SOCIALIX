@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "../../context/AuthContext";
 import { ref, onValue } from "firebase/database";
+import Toast from "../others/Toast"
 
 /** FriendCard Component */
 const FriendCard = ({
@@ -116,7 +117,9 @@ const Friends = () => {
             }
 
             const promises = chunks.map((chunk) =>
-              getDocs(query(collection(db, "users"), where("__name__", "in", chunk)))
+              getDocs(
+                query(collection(db, "users"), where("__name__", "in", chunk))
+              )
             );
 
             const results = await Promise.all(promises);
@@ -157,38 +160,37 @@ const Friends = () => {
 
   /** Handle Follow / Unfollow */
   const handleFollowToggle = async (userId, shouldFollow) => {
-    setLoadingState((prev) => ({ ...prev, [userId]: true }));
+  setLoadingState((prev) => ({ ...prev, [userId]: true }));
 
-    const userDocRef = doc(db, "users", currentUser.userId);
-    const targetUserDocRef = doc(db, "users", userId);
+  const userDocRef = doc(db, "users", currentUser.userId);
+  const targetUserDocRef = doc(db, "users", userId);
 
-    try {
-      if (shouldFollow) {
-        await updateDoc(userDocRef, {
-          following: arrayUnion(userId),
-        });
-        await updateDoc(targetUserDocRef, {
-          followers: arrayUnion(currentUser.userId),
-        });
-        setFollowingIds((prev) => [...prev, userId]);
-      } else {
-        await updateDoc(userDocRef, {
-          following: arrayRemove(userId),
-        });
-        await updateDoc(targetUserDocRef, {
-          followers: arrayRemove(currentUser.userId),
-        });
-
-        // Instantly remove from UI
-        setData((prevData) => prevData.filter((user) => user.id !== userId));
-        setFollowingIds((prev) => prev.filter((id) => id !== userId));
-      }
-    } catch (error) {
-      console.error("Failed to update follow status: ", error);
-    } finally {
-      setLoadingState((prev) => ({ ...prev, [userId]: false }));
+  try {
+    if (shouldFollow) {
+      await updateDoc(userDocRef, {
+        following: arrayUnion(userId),
+      });
+      await updateDoc(targetUserDocRef, {
+        followers: arrayUnion(currentUser.userId),
+      });
+      setFollowingIds((prev) => [...prev, userId]);
+    } else {
+      await updateDoc(userDocRef, {
+        following: arrayRemove(userId),
+      });
+      await updateDoc(targetUserDocRef, {
+        followers: arrayRemove(currentUser.userId),
+      });
+      setData((prevData) => prevData.filter((user) => user.id !== userId));
+      setFollowingIds((prev) => prev.filter((id) => id !== userId));
     }
-  };
+  } catch (error) {
+    console.error("Failed to update follow status: ", error);
+  } finally {
+    setLoadingState((prev) => ({ ...prev, [userId]: false }));
+  }
+};
+
 
   return (
     <div className="overflow-hidden">
@@ -205,16 +207,35 @@ const Friends = () => {
               }`}
               onClick={() => setActiveTab(tab)}
             >
-              {tab === "following" ? <FaUserCheck className="mr-2" /> : <FaUsers className="mr-2" />}
+              {tab === "following" ? (
+                <FaUserCheck className="mr-2" />
+              ) : (
+                <FaUsers className="mr-2" />
+              )}
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-y-auto" style={{ maxHeight: "400px" }}>
+      <div
+        className="bg-white rounded-lg border border-gray-200 overflow-y-auto"
+        style={{ maxHeight: "400px" }}
+      >
         {loading ? (
-          <div className="p-4 text-center text-gray-500">Loading...</div>
+          <div className="flex items-center justify-between p-3 border-b border-gray-100">
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                <div className="h-10 w-10 rounded-full bg-gray-300 animate-pulse"></div>
+                <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-gray-300 border-2 border-white animate-pulse"></div>
+              </div>
+              <div className="space-y-1">
+                <div className="h-4 w-24 bg-gray-300 rounded animate-pulse"></div>
+                <div className="h-3 w-16 bg-gray-300 rounded animate-pulse"></div>
+              </div>
+            </div>
+            <div className="h-8 w-20 bg-gray-300 rounded animate-pulse"></div>
+          </div>
         ) : (
           data.map((item) => (
             <FriendCard

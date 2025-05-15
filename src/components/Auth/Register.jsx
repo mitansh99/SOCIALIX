@@ -8,6 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 import loadingGif from "../../assets/loading.gif";
 import { ColoringData } from "../../StaticData";
 import bcrypt from "bcryptjs";
+import ToastManager from "../others/Toast";
 
 const RegisterForm = () => {
   const refs = {
@@ -82,6 +83,7 @@ const RegisterForm = () => {
 
       if (docSnap.exists()) {
         clearForm();
+         window.showToast("User Login success!", "success");
         navigate("/auth/login");
       } else {
         throw new Error("User document not found");
@@ -114,6 +116,7 @@ const RegisterForm = () => {
       className="min-h-screen flex items-center justify-center px-4 py-10 relative"
       style={{ backgroundColor: ColoringData.Theme.light.baseColor }}
     >
+      <ToastManager />
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center z-10 backdrop-blur-[2px]">
           <img src={loadingGif} alt="loading" className="w-20 sm:w-32" />
@@ -161,7 +164,7 @@ const RegisterForm = () => {
         <div className="col-span-2 mt-3">
           <button
             style={{ backgroundColor: ColoringData.Theme.light.primarColor }}
-            className="w-full text-white py-3 rounded-lg font-medium hover:shadow-md text-sm"
+            className="w-full text-white py-3 rounded-lg font-medium hover:shadow-md text-sm cursor-pointer"
             onClick={handleRegister}
           >
             Create Account
