@@ -19,6 +19,7 @@ import bcrypt from "bcryptjs";
 import MobileSearchPage from "./pages/MobileSearchPage";
 import loadingGif from "./assets/loading.gif";
 import MobileFriends from "./components/Home/MobileFriends";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -94,6 +95,8 @@ function MainApp() {
         </div>
       ) : (
         <Routes>
+          <Route path="/" element={<Home />} />
+
           <Route path="/auth" element={<Auth />}>
             <Route path="register" element={<RegisterForm />} />
             <Route path="login" element={<LoginForm />} />
@@ -102,6 +105,9 @@ function MainApp() {
           <Route path="/profile/:userId" element={<ProfilePage />} />
           <Route path="/mobieSearch" element={<MobileSearchPage />} />
           <Route path="/friends" element={<MobileFriends />} />
+
+          {/* not found page  */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       )}
     </>
