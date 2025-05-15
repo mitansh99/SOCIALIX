@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const API_KEY = import.meta.env.VITE_NEWS_API; // Replace with your NewsAPI key
+const API_KEY = import.meta.env.VITE_NEWS_API || process.env.VITE_NEWS_API; // Replace with your NewsAPI key
 const NEWS_API_URL = `https://newsapi.org/v2/top-headlines?category=technology&language=en&pageSize=2&apiKey=${API_KEY}`;
 
 const SkeletonNewsCard = () => (
@@ -26,7 +26,12 @@ const DynamicNews = () => {
     const fetchNews = async () => {
       setLoading(true);
       try {
-        const res = await fetch(NEWS_API_URL);
+        const res = await fetch(NEWS_API_URL, {
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0",
+      },
+    });
         const data = await res.json();
         if (data.status === "ok") {
           setNews(data.articles.slice(0, 2));
