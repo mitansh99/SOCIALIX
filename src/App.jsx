@@ -20,6 +20,7 @@ import MobileSearchPage from "./pages/MobileSearchPage";
 import loadingGif from "./assets/loading.gif";
 import MobileFriends from "./components/Home/MobileFriends";
 import NotFound from "./pages/NotFound";
+import { Analytics } from '@vercel/analytics/react';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
       <UserStatusUpdater />
       <Router>
         <MainApp />
+        <Analytics />
       </Router>
     </div>
   );
