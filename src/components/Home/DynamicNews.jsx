@@ -27,10 +27,10 @@ const DynamicNews = () => {
       setLoading(true);
       try {
         const res = await fetch(NEWS_API_URL, {
-      headers: {
-        "User-Agent": "Mozilla/5.0",
-      },
-    });
+          headers: {
+            "Upgrade-Insecure-Requests": "1",
+          },
+        });
         const data = await res.json();
         if (data.status === "ok") {
           setNews(data.articles.slice(0, 2));
@@ -45,7 +45,7 @@ const DynamicNews = () => {
       }
     };
     fetchNews();
-  }, []);   
+  }, []);
 
   if (loading) {
     return (
