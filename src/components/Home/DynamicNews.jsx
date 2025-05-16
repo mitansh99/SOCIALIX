@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-
-const API_KEY = import.meta.env.VITE_NEWS_API || process.env.VITE_NEWS_API; // Replace with your NewsAPI key
-const NEWS_API_URL = `https://newsapi.org/v2/top-headlines?category=technology&language=en&pageSize=2&apiKey=${API_KEY}`;
+// import {handler} from "../../pages/api/news"
+// const API_KEY = import.meta.env.VITE_NEWS_API || process.env.VITE_NEWS_API; // Replace with your NewsAPI key
+// const NEWS_API_URL = `https://newsapi.org/v2/top-headlines?category=technology&language=en&pageSize=2&apiKey=${API_KEY}`;
 
 const SkeletonNewsCard = () => (
   <div className="bg-white rounded-xl shadow-sm animate-pulse overflow-hidden">
@@ -26,11 +26,7 @@ const DynamicNews = () => {
     const fetchNews = async () => {
       setLoading(true);
       try {
-        const res = await fetch(NEWS_API_URL, {
-          headers: {
-            "Upgrade-Insecure-Requests": "1",
-          },
-        });
+        const res = await fetch("/api/news");
         const data = await res.json();
         if (data.status === "ok") {
           setNews(data.articles.slice(0, 2));
