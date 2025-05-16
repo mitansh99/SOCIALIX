@@ -7,6 +7,11 @@ dotenv.config();
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    allowedHosts: [
+      'socialix-6vkj.onrender.com',
+      'localhost',
+      '127.0.0.1'
+    ],
     host: "0.0.0.0", // Listen on all addresses
     port: process.env.PORT || 3000,
     proxy: {
