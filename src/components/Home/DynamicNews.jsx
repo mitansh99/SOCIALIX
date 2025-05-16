@@ -28,7 +28,6 @@ const DynamicNews = () => {
       try {
         const res = await fetch(NEWS_API_URL, {
       headers: {
-        "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0",
       },
     });
