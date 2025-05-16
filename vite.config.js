@@ -7,6 +7,8 @@ dotenv.config();
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    host: "0.0.0.0", // Listen on all addresses
+    port: process.env.PORT || 3000,
     proxy: {
       "/api/news": {
         target: "https://newsapi.org",
@@ -14,7 +16,7 @@ export default defineConfig({
         rewrite: (path) =>
           path.replace(
             /^\/api\/news/,
-            `/v2/top-headlines?category=technology&language=en&pageSize=2&apiKey=${process.env.VITE_NEWS_API}`,
+            `/v2/top-headlines?category=technology&language=en&pageSize=2&apiKey=${process.env.VITE_NEWS_API}`
           ),
       },
     },
