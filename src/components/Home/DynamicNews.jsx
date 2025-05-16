@@ -46,7 +46,7 @@ const DynamicNews = () => {
       }
     };
     fetchNews();
-  }, []);
+  }, []);   
 
   if (loading) {
     return (
