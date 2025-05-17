@@ -22,6 +22,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import "../App.css";
 import MobileNav from "../components/Home/MobileNav";
+import FollowBtn from "../components/Home/FollowBtn";
 
 export default function ProfilePage() {
   const { userId } = useParams();
@@ -180,62 +181,72 @@ export default function ProfilePage() {
           <img src={loadingGif} alt="loading" className="w-20 sm:w-32" />
         </div>
       ) : (
-        <div className="bg-white pt-5">
-          <button
-            onClick={handleBack}
-            className="ml-5 hidden md:block  underline px-4 py-2 rounded-lg font-semibold text-[#0a0147] transition cursor-pointer "
-          >
-            ← Go Back
-          </button>
+        <div className="bg-white text-center py-5">
+  <button
+    onClick={handleBack}
+    className="ml-5 hidden md:block underline px-4 py-2 rounded-lg font-semibold text-[#0a0147] transition cursor-pointer"
+  >
+    ← Go Back
+  </button>
 
-          <div className="container mx-auto px-4 md:px-6">
-            {/* Cover Image */}
-            <div className={"h-36 md:h-48 rounded-lg relative bg-gray-100"}>
-              <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
-                <div className="bg-[#0a0147] text-white h-24 w-24 rounded-full flex items-center justify-center text-3xl font-semibold border-4 border-[#fe696e]">
-                  {user.fullName.charAt(0).toUpperCase()}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="container mx-auto px-4 md:px-6">
-            <div className="pt-16 pb-6 text-center">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {user.fullName}
-              </h1>
-              <p className="text-gray-500 text-xs mt-1">
-                @{user.username} · Joined{" "}
-                {user.createdAt.toDate().toLocaleDateString("en-GB")}
-              </p>
-
-              <p className="mt-4 text-gray-700 max-w-lg mx-auto text-md ">
-                {user.bio}
-              </p>
-
-              {/* Stats */}
-              <div className="flex justify-center mt-6 space-x-6 md:space-x-12">
-                <div className="text-center">
-                  <div className="font-bold text-gray-900">
-                    {user.followers?.length || 0}
-                  </div>
-                  <div className="text-sm text-gray-500">Followers</div>
-                </div>
-                <div className="text-center">
-                  <div className="font-bold text-gray-900">
-                    {user.following?.length || 0}
-                  </div>
-                  <div className="text-sm text-gray-500">Following</div>
-                </div>
-                <div className="text-center">
-                  <div className="font-bold text-gray-900">
-                    {totalPostsCount} {/* ✅ Show Total Posts Count */}
-                  </div>
-                  <div className="text-sm text-gray-500">Posts</div>
-                </div>
-              </div>
-            </div>
-          </div>
+  <div className="container mx-auto px-4 md:px-6">
+    {/* Cover Image */}
+    <div className={"h-36 md:h-48 rounded-lg relative bg-gray-100"}>
+      <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
+        <div className="bg-[#0a0147] text-white h-24 w-24 rounded-full flex items-center justify-center text-3xl font-semibold border-4 border-[#fe696e]">
+          {user.fullName.charAt(0).toUpperCase()}
         </div>
+      </div>
+    </div>
+  </div>
+  <div className="container mx-auto px-4 md:px-6">
+    <div className="pt-16 pb-6">
+      {/* Profile Header with Follow Button */}
+      <div className={`flex flex-col md:flex-row items-center justify-center max-w-2xl mx-auto ${user.id === currentUser.userId ? "md:justify-center": "md:justify-between"}`}>
+        <div className="text-center md:text-left">
+          <h1 className="text-2xl font-bold text-gray-900">
+            {user.fullName}
+          </h1>
+          <p className="text-gray-500 text-xs mt-1">
+            @{user.username} · Joined{" "}
+            {user.createdAt.toDate().toLocaleDateString("en-GB")}
+          </p>
+        </div>
+        {user.id !== currentUser.userId &&  <FollowBtn userId={user.id}/>}
+       
+      </div>
+
+      {/* Bio Section */}
+      <div className={`mt-6 text-center max-w-2xl mx-auto ${user.id === currentUser.userId ? "md:text-center": "md:text-left" }`}>
+        <p className="text-gray-700 text-md">
+          {user.bio}
+        </p>
+      </div>
+
+      {/* Stats Section */}
+      <div className={`flex justify-center max-w-2xl mx-auto mt-6 space-x-8 md:space-x-12 border-t border-gray-100 pt-4 ${user.id === currentUser.userId ? "md:justify-center": "md:justify-start"}`} >
+        <div className="text-center">
+          <div className="font-bold text-gray-900">
+            {user.followers?.length || 0}
+          </div>
+          <div className="text-sm text-gray-500">Followers</div>
+        </div>
+        <div className="text-center">
+          <div className="font-bold text-gray-900">
+            {user.following?.length || 0}
+          </div>
+          <div className="text-sm text-gray-500">Following</div>
+        </div>
+        <div className="text-center">
+          <div className="font-bold text-gray-900">
+            {totalPostsCount}
+          </div>
+          <div className="text-sm text-gray-500">Posts</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
       )}
 
       {/* Posts Section */}
