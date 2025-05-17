@@ -6,45 +6,18 @@ import { collection, query, where, onSnapshot, doc } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import { ColoringData } from "../../StaticData";
 import "../../App.css";
+import { useApi } from "../../context/ApiContext";
 
 const SidebarLeft = ({ onNavigate, activeComponent }) => {
   const { currentUser } = useAuth();
   const [postCount, setPostCount] = useState(0);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-
-  const [quote, setQuote] = useState(null);
-  const [loadingQuote, setLoadingQuote] = useState(true);
+  
+  const {quote ,  loadingQuote} = useApi();
 
   // Fetch Quote of the Day from quotable.io
-useEffect(() => {
-  const fetchQuote = async () => {
-    setLoadingQuote(true);
-    try {
-      const res = await fetch(
-        `https://api.allorigins.win/get?url=${encodeURIComponent(
-          `https://zenquotes.io/api/random?timestamp=${new Date().getTime()}`
-        )}`
-      );
-      const data = await res.json();
-      const parsedData = JSON.parse(data.contents);
-      setQuote({
-        quoteText: parsedData[0].q,
-        quoteAuthor: parsedData[0].a || "Unknown",
-      });
-    } catch (error) {
-      console.error("Failed to fetch quote:", error);
-      setQuote({
-        quoteText: "Stay connected. Stay inspired.",
-        quoteAuthor: "Unknown",
-      });
-    } finally {
-      setLoadingQuote(false);
-    }
-  };
 
-  fetchQuote();
-}, []);
 
 
   useEffect(() => {

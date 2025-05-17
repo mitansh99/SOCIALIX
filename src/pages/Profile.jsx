@@ -183,10 +183,11 @@ export default function ProfilePage() {
         <div className="bg-white pt-5">
           <button
             onClick={handleBack}
-            className="text-[#0a0147] ml-5 hidden md:block underline px-4 py-2 rounded-lg font-semibold cursor-pointer transition"
+            className="ml-5 hidden md:block  underline px-4 py-2 rounded-lg font-semibold text-[#0a0147] transition cursor-pointer "
           >
-            ← Back
+            ← Go Back
           </button>
+
           <div className="container mx-auto px-4 md:px-6">
             {/* Cover Image */}
             <div className={"h-36 md:h-48 rounded-lg relative bg-gray-100"}>
@@ -244,7 +245,11 @@ export default function ProfilePage() {
           <div className="space-y-4">
             {posts.length > 0 ? (
               posts.map((post) => (
-                <SocialMediaPostCard key={post.id} {...post} handleLikeToggle={handleLikeToggle}/>
+                <SocialMediaPostCard
+                  key={post.id}
+                  {...post}
+                  handleLikeToggle={handleLikeToggle}
+                />
               ))
             ) : (
               <p className="text-center text-sm text-gray-400">

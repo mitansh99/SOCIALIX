@@ -20,14 +20,17 @@ import MobileSearchPage from "./pages/MobileSearchPage";
 import loadingGif from "./assets/loading.gif";
 import MobileFriends from "./components/Home/MobileFriends";
 import NotFound from "./pages/NotFound";
-import { Analytics } from '@vercel/analytics/react';
+import { Analytics } from "@vercel/analytics/react";
+import { ApiProvider } from "./context/ApiContext";
 
 function App() {
   return (
     <div style={{ backgroundColor: `${ColoringData.Theme.light.baseColor}` }}>
       <UserStatusUpdater />
       <Router>
+        <ApiProvider>
         <MainApp />
+        </ApiProvider>
         <Analytics />
       </Router>
     </div>
@@ -42,6 +45,14 @@ function MainApp() {
   useEffect(() => {
     (async () => {
       if (!currentUser) {
+        const currentPath = window.location.pathname;
+
+        // Allow register page access
+        if (currentPath === "/auth/register") {
+          setLoading(false);
+          return;
+        }
+
         const data = JSON.parse(localStorage.getItem("userData"));
         if (data) {
           try {
@@ -115,6 +126,5 @@ function MainApp() {
     </>
   );
 }
-
 
 export default App;

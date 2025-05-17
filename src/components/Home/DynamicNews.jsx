@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-// import {handler} from "../../pages/api/news"
-// const API_KEY = import.meta.env.VITE_NEWS_API || process.env.VITE_NEWS_API; // Replace with your NewsAPI key
-// const NEWS_API_URL = `https://newsapi.org/v2/top-headlines?category=technology&language=en&pageSize=2&apiKey=${API_KEY}`;
+import { useApi } from "../../context/ApiContext";
 
 const SkeletonNewsCard = () => (
   <div className="bg-white rounded-xl shadow-sm animate-pulse overflow-hidden">
@@ -19,29 +17,10 @@ const truncate = (str, max = 100) =>
   str && str.length > max ? str.slice(0, max - 3) + "..." : str;
 
 const DynamicNews = () => {
-  const [news, setNews] = useState([]);
-  const [loading, setLoading] = useState(true);
+ 
+   const { currentNews, loading, error } = useApi();
 
-  useEffect(() => {
-    const fetchNews = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch("/api/news");
-        const data = await res.json();
-        if (data.status === "ok") {
-          setNews(data.articles.slice(0, 2));
-        } else {
-          setNews([]);
-        }
-      } catch (error) {
-        console.error("Failed to fetch news:", error);
-        setNews([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchNews();
-  }, []);
+ 
 
   if (loading) {
     return (
@@ -52,7 +31,7 @@ const DynamicNews = () => {
     );
   }
 
-  if (!news.length) {
+  if (!currentNews.length || error.length >0) {
     return (
       <div className="text-center text-xs text-gray-400">No news available</div>
     );
@@ -60,7 +39,7 @@ const DynamicNews = () => {
 
   return (
     <div className="space-y-4">
-      {news.map((item, idx) => (
+      {currentNews.map((item, idx) => (
         <a
           key={idx}
           href={item.url}

@@ -26,33 +26,34 @@ const Feed = () => {
   // 🔄 **Initial Fetch for First 10 Posts**
   useEffect(() => {
     try {
-    setLoading(true);
+      setLoading(true);
+      console.log(loading);
+      const q = query(
+        collection(db, "posts"),
+        orderBy("createdAt", "desc"),
+        limit(7)
+      );
 
-    const q = query(
-      collection(db, "posts"),
-      orderBy("createdAt", "desc"),
-      limit(7)
-    );
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+          const postData = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) {
-        const postData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+          setPosts(postData);
+          setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+          setLoading(false);
+        }
+      });
 
-        setPosts(postData);
-        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-        
-      }
-    });
-    
-    return () => unsubscribe();
-  }catch(err){
-    console.log(err);
-  }finally{
-    setLoading(false);
-  }
+      return () => unsubscribe();
+    } catch (err) {
+      console.log(err);
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
   }, [currentUser]);
 
   // 🔄 **Handle Like Toggle**
@@ -140,8 +141,8 @@ const Feed = () => {
       <CreatePost />
       <h1 className="text-xl font-bold mb-5">Feed</h1>
 
-      {loading  ? (
-       <SkeletonLoader />
+      {loading ? (
+        <SkeletonLoader />
       ) : (
         <div className="space-y-6">
           {posts.map((post) => (
@@ -153,10 +154,10 @@ const Feed = () => {
           ))}
         </div>
       )}
-      {posts.length <= 0 && <div className="text-center text-gray-400">No post found</div>}
-      {isFetching && (
-        <div className="text-center">Loading more posts...</div>
+      {posts.length <= 0 && (
+        <div className="text-center text-gray-400">No post found</div>
       )}
+      {isFetching && <div className="text-center">Loading more posts...</div>}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { CiUser, CiMail, CiPhone } from "react-icons/ci";
 import { PiPasswordThin } from "react-icons/pi";
 import { doc, collection, addDoc, getDoc } from "firebase/firestore";
@@ -11,6 +11,12 @@ import bcrypt from "bcryptjs";
 import ToastManager from "../others/Toast";
 
 const RegisterForm = () => {
+  const {currentUser ,setCurrentUser} = useAuth();
+  useEffect(()=>{
+    if (!currentUser && location.pathname === "/auth/register") {
+      navigate("/auth/register");
+    }
+  }, [currentUser, location]);
   const refs = {
     userEmail: useRef(""),
     userName: useRef(""),
@@ -85,8 +91,7 @@ const RegisterForm = () => {
 
       if (docSnap.exists()) {
         clearForm();
-        window.showToast("User Registration Successful!", "success");
-        navigate("/auth/login");
+          navigate("/auth/login");
       } else {
         throw new Error("User document not found");
       }
@@ -172,6 +177,8 @@ const RegisterForm = () => {
 
         <div className="col-span-1 md:col-span-2 mt-2 sm:mt-3">
           <button
+          type="button"
+          disabled={isLoading}
             style={{ backgroundColor: ColoringData.Theme.light.primarColor }}
             className="w-full text-white py-2 md:py-3 rounded-lg font-medium hover:shadow-md text-xs sm:text-sm cursor-pointer transition-shadow"
             onClick={handleRegister}
